@@ -1,0 +1,1703 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>번영손해사정 업무관리</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232e3747'/%3E%3Cg transform='translate(10 8) scale(.8)'%3E%3Cpath d='M50 5 L88 22 V58 Q88 80 50 95 Q12 80 12 58 V22 Z M25 39 L50 24 L75 39' fill='none' stroke='%23e2bf6a' stroke-width='6'/%3E%3Cg fill='%23e2bf6a'%3E%3Crect x='21' y='45' width='58' height='6'/%3E%3Crect x='33' y='54' width='34' height='5'/%3E%3Crect x='37' y='62' width='5' height='24'/%3E%3Crect x='47.5' y='62' width='5' height='28'/%3E%3Crect x='58' y='62' width='5' height='24'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f4f1; --card:#ffffff; --card-2:#f9f9f7; --line:#e1e0d9; --line-2:#c3c2b7;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --accent:#2a78d6; --accent-ink:#1c5cab; --accent-wash:#e6f0fc;
+  --s1:#2a78d6; --s2:#eb6834; --cmp:#b9b8b1;
+  --good:#0ca30c; --good-ink:#006300; --good-wash:#e5f5e5;
+  --warn:#fab219; --warn-ink:#8a5a00; --warn-wash:#fdf3dc;
+  --crit:#d03b3b; --crit-ink:#b02a2a; --crit-wash:#fbe9e9;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 1px 1px rgba(0,0,0,.03);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d0d0d; --card:#1a1a19; --card-2:#222220; --line:#2c2c2a; --line-2:#383835;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --accent:#3987e5; --accent-ink:#86b6ef; --accent-wash:#16263a;
+    --s1:#3987e5; --s2:#d95926; --cmp:#55544f;
+    --good-ink:#0ca30c; --good-wash:#14260f; --warn-ink:#fab219; --warn-wash:#2c2410; --crit-ink:#e66767; --crit-wash:#2e1616;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0d0d0d; --card:#1a1a19; --card-2:#222220; --line:#2c2c2a; --line-2:#383835;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --accent:#3987e5; --accent-ink:#86b6ef; --accent-wash:#16263a;
+    --s1:#3987e5; --s2:#d95926; --cmp:#55544f;
+    --good-ink:#0ca30c; --good-wash:#14260f; --warn-ink:#fab219; --warn-wash:#2c2410; --crit-ink:#e66767; --crit-wash:#2e1616;
+    --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent-ink)}
+.app{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+nav.side{background:var(--card);border-right:1px solid var(--line);padding:20px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:2px}
+.brand{margin:0 0 16px;text-align:center}
+.brand img{display:block;width:100%;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.brand small{display:block;margin-top:8px;font-size:12px;color:var(--muted);letter-spacing:.06em}
+nav.side a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink-2);text-decoration:none}
+nav.side a:hover{background:var(--card-2)}
+nav.side a.on{background:var(--accent-wash);color:var(--accent-ink);font-weight:600}
+nav.side a .cnt{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+nav.side .foot{margin-top:auto;font-size:12px;color:var(--muted);padding:10px}
+main{padding:24px 28px 60px;min-width:0;max-width:1320px}
+.mainwrap{min-width:0}
+#syncBar{padding:16px 28px 0;max-width:1320px}
+#syncBar:empty{display:none}
+#syncBar .banner{margin-bottom:0;flex-wrap:wrap}
+.banner.crit{background:var(--crit-wash);color:var(--crit-ink)}
+.banner.good{background:var(--good-wash);color:var(--good-ink)}
+.head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.head h1{font-size:22px;margin:0;letter-spacing:-.02em}
+.head .sub{color:var(--muted);font-size:13px}
+.head .sp{flex:1}
+.btn{border:1px solid var(--line-2);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--card-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.dan{color:var(--crit-ink);border-color:var(--crit-wash)}
+.btn.sm{padding:3px 9px;font-size:12.5px}
+.btn.file-ok{background:var(--good-wash);color:var(--good-ink);border-color:transparent;font-weight:600}
+.btn.file-ok:hover{filter:brightness(.96)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .note{font-weight:400;color:var(--muted);font-size:12px;margin-left:auto}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-7-5{grid-template-columns:7fr 5fr}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12.5px;color:var(--ink-2)}
+.kpi .v{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:4px 0 2px;white-space:nowrap}
+.kpi .s{font-size:12px;color:var(--muted)}
+.up{color:var(--good-ink)} .down{color:var(--crit-ink)}
+.mb{margin-bottom:14px}
+table.t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.t th{font-weight:600;font-size:12.5px;color:var(--ink-2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap;background:var(--card);position:sticky;top:0}
+table.t th.sort{cursor:pointer}
+table.t th.sort:hover{color:var(--ink)}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+table.t tr.row{cursor:pointer}
+table.t tr.row:hover td{background:var(--card-2)}
+table.t .r{text-align:right}
+table.t.compact th,table.t.compact td{padding:8px 4px;font-size:12.5px}
+table.t tfoot td{font-weight:700;border-top:1px solid var(--line-2);border-bottom:0}
+.tw{overflow:auto;max-width:100%}
+.tw.tall{max-height:calc(100vh - 230px)}
+.muted{color:var(--muted)} .ink2{color:var(--ink-2)}
+.nowrap{white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--card-2);color:var(--ink-2);border:1px solid var(--line)}
+.badge.good{background:var(--good-wash);color:var(--good-ink);border-color:transparent}
+.badge.warn{background:var(--warn-wash);color:var(--warn-ink);border-color:transparent}
+.badge.crit{background:var(--crit-wash);color:var(--crit-ink);border-color:transparent}
+.badge.acc{background:var(--accent-wash);color:var(--accent-ink);border-color:transparent}
+.stage{display:inline-flex;flex-direction:column;gap:3px;min-width:96px}
+.stage .bar{display:flex;gap:2px}
+.stage .bar i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.stage .bar i.on{background:var(--accent)}
+.stage.done .bar i.on{background:var(--good)}
+.stage span{font-size:12.5px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters input,.filters select{border:1px solid var(--line-2);background:var(--card);border-radius:8px;padding:6px 10px}
+.filters input[type=search]{min-width:220px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:6px 11px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent-wash);color:var(--accent-ink);font-weight:600}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--ink-2);margin:-4px 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.chart{position:relative}
+.chart svg{display:block}
+.chart .grid-l{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--line-2);stroke-width:1}
+.chart .tick{fill:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.chart .lbl{fill:var(--ink-2);font-size:11.5px;font-weight:600}
+.chart .band{fill:var(--ink);opacity:0}
+.chart .hit:hover+.band,.chart .band.on{opacity:.045}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;white-space:nowrap;z-index:5;font-variant-numeric:tabular-nums}
+.tip b{display:block;margin-bottom:3px}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.hbars{display:flex;flex-direction:column;gap:7px}
+.hb{display:grid;grid-template-columns:96px 1fr 118px;gap:10px;align-items:center;font-size:13px}
+.hb .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .tr{height:14px;background:var(--card-2);border-radius:0 4px 4px 0;position:relative}
+.hb.oth .tr b{background:var(--cmp)}
+.hb .tr b{position:absolute;left:0;top:0;bottom:0;background:var(--s1);border-radius:0 4px 4px 0;min-width:2px}
+.hb .vv{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.hb .vv small{color:var(--muted);margin-left:4px}
+.pipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin-bottom:14px}
+.pipe:last-child{margin-bottom:0}
+.pipe-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);margin:0 0 8px}
+.pipe button.z{opacity:.55}
+.pipe button{border:1px solid var(--line);background:var(--card-2);border-radius:10px;padding:10px 8px;cursor:pointer;text-align:left}
+.pipe button:hover{border-color:var(--accent)}
+.pipe .n{font-size:22px;font-weight:700;display:block}
+.pipe .k{font-size:12px;color:var(--ink-2);line-height:1.35;display:block}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.li .todo-cb{width:18px;height:18px;flex-shrink:0;margin:0;cursor:pointer}
+.li:last-child{border-bottom:0}
+.li:hover{background:var(--card-2)}
+.li .m{flex:1;min-width:0}
+.li .m div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .m small{color:var(--muted)}
+.empty{color:var(--muted);padding:18px 4px;text-align:center}
+dialog{border:0;border-radius:14px;padding:0;width:min(940px,96vw);max-height:92vh;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}
+.dlg-h h3{margin:0;font-size:17px;flex:1}
+.dlg-b{padding:4px 20px 20px;overflow:auto;max-height:calc(92vh - 130px)}
+.dlg-f{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:var(--card)}
+.dlg-f .sp{flex:1}
+fieldset{border:0;padding:0;margin:16px 0 0}
+legend{font-weight:700;font-size:14px;padding:0;margin-bottom:8px;display:flex;gap:8px;align-items:center;width:100%}
+.fg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px}
+.fg label,.fg .fl{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.fg .w2{grid-column:span 2} .fg .w4{grid-column:span 4}
+.fg input,.fg select,.fg textarea{border:1px solid var(--line-2);background:var(--card);border-radius:7px;padding:6px 9px;color:var(--ink);width:100%;min-width:0}
+.fg input[type=checkbox]{width:auto;padding:0}
+.fg .chk label{flex-direction:row;color:var(--ink);font-size:13px}
+.fg input.num{text-align:right;font-variant-numeric:tabular-nums}
+.fg .hint{font-size:11.5px;color:var(--muted)}
+.chk{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
+.chk label{display:flex;gap:6px;align-items:center;color:var(--ink);flex-direction:row}
+.bill{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--card-2)}
+.bill-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;font-size:13px}
+.bill-h .sp{flex:1}
+.logs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.log{display:flex;gap:10px;font-size:13px;padding:6px 10px;background:var(--card-2);border-radius:7px;align-items:flex-start}
+.log .d{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.log .x{margin-left:auto;cursor:pointer;color:var(--muted);border:0;background:none}
+.todos{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+.todo-row{display:flex;gap:8px;align-items:center}
+.todo-row [data-tf=text]{flex:1;min-width:0}
+.todo-row [data-tf=due],.todo-row [data-tf=start]{width:140px;flex-shrink:0}
+.todo-row label{flex-direction:row;align-items:center;gap:5px;flex-shrink:0;color:var(--ink);font-size:13px}
+.todo-row .x{cursor:pointer;color:var(--muted);border:0;background:none;padding:4px 6px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:9px 16px;border-radius:9px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:100}
+.toast.on{opacity:1}
+.banner{display:flex;gap:10px;align-items:center;background:var(--warn-wash);color:var(--warn-ink);border-radius:10px;padding:9px 14px;margin-bottom:14px;font-size:13px}
+.banner .sp{flex:1}
+input.cell{border:1px solid transparent;background:transparent;border-radius:6px;padding:4px 6px;width:100%;text-align:right;font-variant-numeric:tabular-nums}
+input.cell:hover,input.cell:focus{border-color:var(--line-2);background:var(--card)}
+.docs{display:inline-flex;gap:4px}
+/* 목록 탭(사건·수임계약·수금·매출): 창 크기에 맞춰 넓이·줄바꿈·간격 조절 */
+main.wide{max-width:none}
+main.wide table.t td{white-space:normal}
+main.wide table.t td.r,main.wide table.t td.nowrap{white-space:nowrap}
+main.wide table.t .docs{flex-wrap:wrap}
+main.wide input.cell:not([style]){min-width:80px}
+table.ct .na{min-width:130px;max-width:260px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (max-width:1500px){main.wide table.t th,main.wide table.t td{padding:7px 6px}main.wide table.t td{font-size:13px}}
+@media (max-width:1250px){main.wide{padding-left:16px;padding-right:16px}main.wide table.t th,main.wide table.t td{padding:6px 4px;font-size:12.5px}main.wide table.t .docs span{padding:1px 4px}main.wide table.t th{white-space:normal;word-break:keep-all}main.wide table.t .btn.sm{white-space:normal;word-break:keep-all;line-height:1.3;min-width:76px}}
+/* 대시보드 월별 매출액·입금액: 좁은 창에서는 1~6월 / 7~12월 두 줄로 */
+table.dm-split{display:none}
+table.dm-split tr:nth-child(4) th{padding-top:14px}
+@media (max-width:1250px){#dmTable table:not(.dm-split){display:none}#dmTable table.dm-split{display:table}}
+/* 부가세·소득세 신고표: 노트북 화면부터 칸을 좁게 */
+@media (max-width:1400px){
+  table.taxt th{white-space:normal;word-break:keep-all}
+  table.taxt input.cell{padding:4px 3px}
+  table.taxt input.cell[data-f="year"]{width:46px!important}table.taxt input.cell[data-f="label"]{width:64px!important}table.taxt input.cell[data-f="memo"]{min-width:56px!important}
+  table.taxt td.acts{white-space:normal;min-width:76px}table.taxt td.acts .btn.sm{display:block;margin:2px 0;width:100%;white-space:normal;word-break:keep-all;line-height:1.3}}
+.docs span{white-space:nowrap;font-size:11.5px;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+.docs span.ok{background:var(--good-wash);color:var(--good-ink);border-color:transparent}
+.docs span.no{background:var(--crit-wash);color:var(--crit-ink);border-color:transparent}
+.sumline{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-bottom:12px}
+.sumline b{color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:1180px){.kpis,.kpis.k5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  nav.side{position:sticky;top:0;height:auto;flex-direction:row;overflow-x:auto;padding:8px;z-index:10;border-right:0;border-bottom:1px solid var(--line)}
+  .brand,nav.side .foot{display:none}
+  nav.side a{white-space:nowrap}
+  main{padding:16px}
+  #syncBar{padding:12px 16px 0}
+  .g2,.g3,.g-7-5{grid-template-columns:1fr}
+  .kpis,.kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fg{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fg label.w4{grid-column:span 2}
+}
+@media print{nav.side,.btn,.filters{display:none!important}.app{display:block}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side" id="nav">
+    <div class="brand"><img src="data:image/jpeg;base64,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" alt="번영 손해사정"><small>업무관리 시스템</small></div>
+    <a href="#dashboard" data-v="dashboard">대시보드</a>
+    <a href="#leads" data-v="leads">영업 리드 <span class="cnt" id="cnt-leads" title="진행 중인 리드"></span></a>
+    <a href="#cases" data-v="cases">사건 관리 <span class="cnt" id="cnt-open"></span></a>
+    <a href="#contracts" data-v="contracts">수임계약 관리</a>
+    <a href="#collect" data-v="collect">수금 관리 <span class="cnt" id="cnt-unpaid"></span></a>
+    <a href="#revenue" data-v="revenue">매출 현황</a>
+    <a href="#tax" data-v="tax">부가세 · 소득세</a>
+    <a href="#settings" data-v="settings">백업 · 설정</a>
+    <div class="foot"><div id="syncState" style="margin-bottom:6px"></div><div id="savedAt"></div></div>
+  </nav>
+  <div class="mainwrap"><div id="syncBar"></div><main id="main"></main></div>
+</div>
+
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+const SEED = {"cases":[],"tax":[]}; // 인터넷 버전: 고객 정보 제거
+const KEY = 'byeongyoung_adjust_v1';
+const DONE = '종결(수수료 입금)';
+const TRACKS = {
+  '선임권': ['피보험자 면담 - 선임계약', '선임 동의서 제출', '현장조사', '현장보고서 제출', '서류 접수', '손해액 산정 및 중간보고서 작성', '중간보고서 제출', '피보험자 금액 안내', '최종서류 접수', '종결보고서 제출', DONE],
+  '일반': ['피보험자 면담 - 선임계약', '현장조사', '서류 접수', '손해액 산정 및 제출', '피보험자 금액 안내', '보험사 협의', '최종서류 접수', '보수청구서 제출', DONE]
+};
+const TRACK_NAMES = Object.keys(TRACKS);
+const stagesOf = c => TRACKS[c.track] || TRACKS['일반'];
+const ALL_STAGES = [...new Set(Object.values(TRACKS).flat())];
+const LONG_DAYS = 150;
+const RECV = [['policy','보험증권'],['infoPoa','정보공개위임장'],['idCopy','신분증사본']];
+const recvMissing = c => RECV.some(([k]) => !c.recv?.[k]);
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const won = v => Math.round(v || 0).toLocaleString('ko-KR');
+const num = v => { const n = Number(String(v ?? '').replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : 0; };
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pct = (v, d = 1) => (v * 100).toFixed(d) + '%';
+function short(v) {
+  v = Math.round(v || 0); const neg = v < 0; v = Math.abs(v); let s;
+  if (v >= 1e8) { const e = Math.floor(v / 1e8), m = Math.round((v % 1e8) / 1e4); s = e + '억' + (m ? ' ' + m.toLocaleString() + '만' : ''); }
+  else if (v >= 1e4) s = Math.round(v / 1e4).toLocaleString() + '만';
+  else s = v.toLocaleString();
+  return (neg ? '-' : '') + s;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2000); }
+function fmtDate(d) { return d ? d.slice(2).replace(/-/g, '.') : ''; }
+
+/* ---------- state ---------- */
+let S;
+function blankBilling(rate = 0, share = 1) { return { id: uid(), claim: 0, rate, share, fee: 0, vat: 0, extra: 0, expense: 0, expVat: 0, incomeTax: 0, billDate: '', paidDate: '', memo: '' }; }
+const billTotal = b => b.fee + b.vat + (b.extra || 0);
+function fromSeed() {
+  const cases = SEED.cases.map(r => {
+    const bills = (Array.isArray(r.billings) ? r.billings : [r.billings]).map(b => ({ ...blankBilling(), ...b, paidDate: b.paidDate || '', id: uid() }));
+    const unpaid = bills.some(b => !b.paidDate && (b.fee || b.vat));
+    const stage = r.closed && !unpaid ? DONE : unpaid ? '수수료 청구' : '현장조사';
+    return {
+      id: uid(), year: r.year, no: r.no, name: r.name || '', region: r.region || '', type: r.type || '',
+      acceptDate: r.acceptDate || '', accidentDate: '', insurer: '', insurerContact: '', clientPhone: '', address: '',
+      stage, nextAction: '', dueDate: '',
+      contract: { date: r.acceptDate || '', rate: bills[0]?.rate || 0, share: bills[0]?.share ?? 1, partner: '', docs: {}, memo: '' },
+      billings: bills, logs: [], memo: ''
+    };
+  });
+  return { version: 1, cases, tax: SEED.tax.map(t => ({ id: uid(), memo: '', ...t })), meta: { importedAt: todayStr(), lastBackup: '' } };
+}
+function migrate() {
+  const v = S.version || 1;
+  if (v >= 8) return false;
+  if (v === 7) return migrateV8();
+  if (v === 6) return migrateV7();
+  if (v === 5) return migrateV6();
+  if (v === 4) return migrateV5();
+  if (v >= 3) return migrateV4();
+  if (v < 2) {
+    // v1 단계(공통 8단계) → 진행 구분별 단계. 수수료가 잡혀 있다는 이유로 단계를 추정하지 않음(미지정)
+    const map = { '접수·계약': 'FIRST', '현장조사': '현장조사', '자료수집': '서류 접수', '손해사정서 작성': { '선임권': '손해액 산정 및 중간보고서 작성', '일반': '손해액 산정 및 제출' }, '보험사 협의': { '선임권': '중간보고서 제출', '일반': '보험사 협의' }, '지급 결정': '최종서류 접수', '수수료 청구': 'NONE', '종결': 'DONE' };
+    for (const c of S.cases) {
+      if (!c.track) c.track = /선임권/.test(c.name + ' ' + (c.contract?.memo || '')) ? '선임권' : '일반';
+      c.recv ??= {};
+      const st = stagesOf(c); let m = map[c.stage];
+      if (m === 'FIRST') m = st[0]; else if (m === 'DONE') m = DONE; else if (m && typeof m === 'object') m = m[c.track];
+      c.stage = m === 'NONE' ? '' : st.includes(m) ? m : st.includes(c.stage) ? c.stage : st[0];
+    }
+  } else {
+    // v2: 수수료가 잡혀 있어 자동으로 넣었던 "보수청구서 제출/종결보고서 제출"은 직접 바꾼 기록이 없으면 미지정으로
+    for (const c of S.cases) {
+      const st = stagesOf(c);
+      if (isOpen(c) && c.stage === st[st.length - 2] && !c.logs.some(l => /단계 변경/.test(l.text))) c.stage = '';
+    }
+  }
+  // 입금된 수수료는 확정, 그 외는 예상 수수료
+  for (const c of S.cases) for (const b of c.billings) b.confirmed ??= !!b.paidDate;
+  return migrateV4();
+}
+function migrateV4() {
+  // 기존 종결 사건은 보험증권·정보공개위임장·신분증사본을 모두 접수한 것으로 처리 (한 번만 실행)
+  for (const c of S.cases) if (c.stage === DONE) { c.recv ??= {}; for (const [k] of RECV) c.recv[k] = true; }
+  S.version = 4; return migrateV5();
+}
+function migrateV5() {
+  // 예전에 자동으로 남긴 "단계 변경" 진행일지 기록 삭제 (입금 완료 기록은 입금 내용만 남김)
+  for (const c of S.cases) {
+    c.logs = c.logs
+      .map(l => /^수수료 입금 완료 · 단계 변경:/.test(l.text) ? { ...l, text: '수수료 입금 완료' } : l)
+      .filter(l => !/^단계 변경:/.test(l.text));
+  }
+  S.version = 5; return migrateV6();
+}
+function migrateV6() {
+  // 예상 종결년월: 엑셀 2026년도 시트의 "예상 종결"(10월·11월·12월 마무리) 값을 미결 사건에 채움 (이미 입력한 값은 그대로)
+  const plan = {}; // 인터넷 버전: 사건 이름 제거
+  for (const [ym, names] of Object.entries(plan)) for (const c of S.cases)
+    if (isOpen(c) && caseYear(c) === 2026 && names.includes(c.name) && !c.expectedClose) c.expectedClose = ym;
+  S.version = 6; return migrateV7();
+}
+function migrateV7() {
+  // 다음 할 일 여러 개: 기존 "다음 할 일·기한"을 할 일 목록(todos)의 첫 항목으로 옮김 (이미 목록이 있으면 그대로)
+  for (const c of S.cases) if (!Array.isArray(c.todos)) c.todos = c.nextAction || c.dueDate ? [{ id: uid(), text: c.nextAction || '', due: c.dueDate || '' }] : [];
+  S.version = 7; return migrateV8();
+}
+function migrateV8() {
+  // 영업 리드: 노션 "번영손해사정 영업리드 DB"의 리드(2026-10-07 기준 4건)를 옮겨 옴. 이미 리드 목록이 있으면 그대로
+  // 수임 성공 리드는 이름이 같은 사건(사건명 뒤에 "(선임권)" 등이 붙은 경우 포함)과 이어 둠
+  if (!Array.isArray(S.leads)) S.leads = NOTION_LEADS.map(l => ({ id: uid(), nextDate: '', memo: '', ...l,
+    caseId: l.stage === '수임 성공' ? S.cases.find(c => c.name.replace(/\s/g, '').startsWith(l.name.replace(/\s/g, '')))?.id || '' : '' }));
+  S.version = 8; return true;
+}
+const NOTION_LEADS = []; // 인터넷 버전: 고객 정보 제거
+function load() {
+  try { const raw = localStorage.getItem(KEY); if (raw) { S = JSON.parse(raw); if (migrate()) persistLocal(); return; } } catch (e) { console.warn(e); }
+  S = WEB ? { version: 8, cases: [], tax: [], leads: [], meta: {} } : fromSeed(); migrate(); persistLocal(); // 인터넷 버전은 빈 상태로 시작해 OneDrive에서 불러옴
+}
+// 이 PC 브라우저에 보관 (OneDrive 데이터 파일을 쓰지 않을 때의 저장소이자, 파일 연결 시 임시 보관본)
+function persistLocal() { try { localStorage.setItem(KEY, JSON.stringify(S)); return true; } catch (e) { return e; } }
+function save(silent) {
+  S.meta.savedAt = new Date().toLocaleString('ko-KR');
+  if (SYNC.handle) S.meta.dirty = true; // 데이터 파일에 아직 쓰지 않은 변경 있음
+  const ok = persistLocal();
+  if (ok !== true && !SYNC.handle) alert('저장에 실패했습니다. 백업 파일로 내보내 주세요.\n' + ok.message);
+  if (!silent) toast('저장했습니다');
+  $('#savedAt').textContent = '자동 저장됨 · ' + (S.meta.savedAt || '');
+  updateCounts();
+  if (SYNC.state === 'ok') syncTask(pushToFile);
+  renderSyncUI();
+}
+
+/* ---------- derived ---------- */
+const caseYear = c => c.acceptDate ? +c.acceptDate.slice(0, 4) : (c.year || new Date().getFullYear());
+function sum(c) {
+  let fee = 0, vat = 0, extra = 0, claim = 0, paidFee = 0, unpaidFee = 0, unpaidTotal = 0, cost = 0, lastPaid = '', firstUnpaidBill = '';
+  for (const b of c.billings) {
+    fee += b.fee; vat += b.vat; extra += b.extra || 0; claim += b.claim; cost += b.expense + b.expVat + b.incomeTax;
+    if (b.paidDate) { paidFee += b.fee; if (b.paidDate > lastPaid) lastPaid = b.paidDate; }
+    else if (billTotal(b)) { unpaidFee += b.fee; unpaidTotal += billTotal(b); if (b.billDate && (!firstUnpaidBill || b.billDate < firstUnpaidBill)) firstUnpaidBill = b.billDate; }
+  }
+  const allPaid = unpaidTotal === 0 && !!lastPaid;
+  const procDays = allPaid && c.acceptDate ? days(c.acceptDate, lastPaid) : null;
+  const elapsed = c.acceptDate ? days(c.acceptDate, todayStr()) : null;
+  return { fee, vat, total: fee + vat + extra, extra, claim, paidFee, unpaidFee, unpaidTotal, net: fee + vat + extra - cost, lastPaid, allPaid, procDays, elapsed, firstUnpaidBill };
+}
+const isOpen = c => c.stage !== DONE;
+function unpaidBills() {
+  const out = [];
+  for (const c of S.cases) for (const b of c.billings) if (!b.paidDate && billTotal(b)) {
+    const from = b.billDate || c.acceptDate; const el = from ? days(c.acceptDate || from, todayStr()) : null;
+    out.push({ c, b, elapsed: el });
+  }
+  return out.sort((a, b) => (b.elapsed ?? 0) - (a.elapsed ?? 0));
+}
+function years() { const ys = new Set(S.cases.map(caseYear)); ys.add(new Date().getFullYear()); return [...ys].sort(); }
+function yearStats(y, cases = S.cases) {
+  const cs = cases.filter(c => caseYear(c) === y);
+  let claim = 0, fee = 0, expense = 0, net = 0, unpaid = 0, rates = [], pd = [], total = 0;
+  for (const c of cs) {
+    const s = sum(c); claim += s.claim; fee += s.fee; net += s.net; unpaid += s.unpaidFee; total += s.total;
+    for (const b of c.billings) { expense += b.expense; if (b.rate > 0) rates.push(b.rate); }
+    if (s.procDays > 0 && s.procDays < 1000) pd.push(s.procDays);
+  }
+  let paidBasis = 0;
+  for (const c of cases) for (const b of c.billings) if (b.paidDate && +b.paidDate.slice(0, 4) === y) paidBasis += b.fee;
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  return { y, count: cs.length, claim, fee, total, expense, net, unpaid, paidBasis, avgFee: cs.length ? fee / cs.length : 0, avgRate: avg(rates), avgDays: avg(pd), nDays: pd.length };
+}
+function monthly(y, basis = 'accept', vat = true, cases = S.cases) {
+  const m = Array(12).fill(0);
+  for (const c of cases) for (const b of c.billings) {
+    const d = basis === 'accept' ? c.acceptDate : b.paidDate; if (!d || +d.slice(0, 4) !== y) continue;
+    m[+d.slice(5, 7) - 1] += vat ? billTotal(b) : b.fee;
+  }
+  return m;
+}
+function stageIdx(c) { return stagesOf(c).indexOf(c.stage); } // 미지정이면 -1
+function stageHtml(c) {
+  const st = stagesOf(c), i = stageIdx(c), done = c.stage === DONE;
+  if (i < 0) return `<span class="stage"><span class="badge warn">● 단계 미지정</span></span>`;
+  return `<span class="stage ${done ? 'done' : ''}"><span>${done ? '' : `<span class="muted">${i + 1}/${st.length}</span> `}${esc(c.stage)}</span><span class="bar">${st.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</span></span>`;
+}
+const isConfirmed = b => !!(b.confirmed || b.paidDate);
+const feeKind = b => isConfirmed(b) ? '<span class="badge good">확정</span>' : '<span class="badge">예상</span>';
+const trackBadge = c => c.track === '선임권' ? '<span class="badge acc">선임권</span>' : '<span class="badge">일반</span>';
+function recvChips(c) {
+  const open = isOpen(c);
+  return `<span class="docs">${RECV.map(([k, l]) => { const v = !!c.recv?.[k]; return `<span class="${v ? 'ok' : open ? 'no' : ''}" title="${l}: ${v ? '접수' : '미접수'}">${v ? '✓' : '✕'} ${l.replace('정보공개위임장', '정보공개').replace('신분증사본', '신분증').replace('보험증권', '증권')}</span>`; }).join('')}</span>`;
+}
+// 예상 종결년월 표시: 미결 사건만, 이미 지난 달이면 경고
+function expectedCloseHtml(c) {
+  if (!isOpen(c)) return '<span class="muted">-</span>';
+  if (!c.expectedClose) return '<span class="muted">미입력</span>';
+  const [y, m] = c.expectedClose.split('-'), label = `${y.slice(2)}년 ${+m}월`;
+  return c.expectedClose < todayStr().slice(0, 7) ? `<span class="badge crit">⚠ ${label} 지남</span>` : label;
+}
+// 다음 할 일 목록: c.todos = [{ id, text, start, due }]. start(시작일)가 비어 있으면 하루짜리, 있으면 start~due 기간. 완료하면 진행일지로 옮기고 목록에서 뺌
+const todosOf = c => Array.isArray(c.todos) ? c.todos : c.nextAction || c.dueDate ? [{ id: 't0', text: c.nextAction || '', due: c.dueDate || '' }] : [];
+const sortTodos = l => [...l].sort((a, b) => (a.due || '9999') < (b.due || '9999') ? -1 : (a.due || '9999') > (b.due || '9999') ? 1 : 0);
+const firstTodo = c => sortTodos(todosOf(c))[0];
+// 빈 줄 정리·기한순 정렬. 예전 칸(nextAction·dueDate)은 가장 급한 할 일로 맞춰 둠 (카카오톡 알림 등에서 읽음)
+function syncTodos(c) {
+  c.todos = sortTodos(todosOf(c).filter(t => (t.text || '').trim() || t.due || t.start).map(fixPeriod));
+  const f = c.todos[0]; c.nextAction = f?.text || ''; c.dueDate = f?.due || ''; c.startDate = f?.start || '';
+}
+// 기간 정리: 시작일만 있으면 그날 하루, 시작이 마감보다 늦으면 서로 바꿈, 같은 날이면 하루짜리
+function fixPeriod(t) {
+  let { start = '', due = '' } = t;
+  if (start && !due) { due = start; start = ''; }
+  if (start && start > due) [start, due] = [due, start];
+  if (start === due) start = '';
+  return { ...t, start, due };
+}
+const md = d => d ? `${+d.slice(5, 7)}.${+d.slice(8, 10)}` : ''; // 2026-10-13 → 10.13
+const periodText = t => t.start ? `${md(t.start)}~${md(t.due)}` : '';
+function dueBadge(c, t = firstTodo(c)) {
+  const due = t?.due; if (!due || !isOpen(c)) return '';
+  const today = todayStr(), d = days(today, due);
+  if (d < 0) return `<span class="badge crit">⚠ ${-d}일 지남</span>`;
+  if (t.start && today < t.start) return `<span class="badge" title="${periodText(t)}">${md(t.start)}부터</span>`;
+  if (t.start) return `<span class="badge ${d <= 7 ? 'warn' : 'acc'}" title="${periodText(t)}">${d <= 7 ? '● ' : ''}진행 · 마감 D-${d}</span>`;
+  if (d <= 7) return `<span class="badge warn">● D-${d}</span>`;
+  return `<span class="badge">D-${d}</span>`;
+}
+
+/* ---------- charts ---------- */
+function niceTicks(max, n = 4) {
+  if (max <= 0) return [0, 1];
+  const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+  const t = []; for (let v = 0; v <= max + step * 0.999; v += step) t.push(v); return t;
+}
+function roundTop(x, y, w, h, r) { r = Math.min(r, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+function barChart(el, { labels, series, height = 240, valueLabels = [] }) {
+  const W = Math.max(280, el.clientWidth || 600), H = height, pl = 58, pr = 10, pt = 18, pb = 26;
+  const max = Math.max(1, ...series.flatMap(s => s.values));
+  const ticks = niceTicks(max), top = ticks[ticks.length - 1];
+  const iw = W - pl - pr, ih = H - pt - pb, n = labels.length, gw = iw / n, k = series.length;
+  const bw = Math.max(4, Math.min(34, (gw * 0.7 - (k - 1) * 2) / k));
+  const Y = v => pt + ih - (v / top) * ih;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (const t of ticks) s += `<line class="grid-l" x1="${pl}" x2="${W - pr}" y1="${Y(t)}" y2="${Y(t)}"/><text class="tick" x="${pl - 8}" y="${Y(t) + 4}" text-anchor="end">${short(t)}</text>`;
+  labels.forEach((lb, i) => {
+    const x0 = pl + gw * i, cx = x0 + gw / 2, gwid = k * bw + (k - 1) * 2;
+    s += `<rect class="hit" data-i="${i}" x="${x0}" y="${pt}" width="${gw}" height="${ih}" fill="transparent"/><rect class="band" x="${x0}" y="${pt}" width="${gw}" height="${ih}"/>`;
+    series.forEach((se, j) => {
+      const v = se.values[i] || 0; if (v <= 0) return;
+      const x = cx - gwid / 2 + j * (bw + 2);
+      s += `<path d="${roundTop(x, Y(v), bw, ih + pt - Y(v), 4)}" fill="${se.color}" pointer-events="none"/>`;
+      if (valueLabels.includes(i) && j === k - 1) s += `<text class="lbl" x="${x + bw / 2}" y="${Y(v) - 5}" text-anchor="middle">${short(v)}</text>`;
+    });
+    s += `<text class="tick" x="${cx}" y="${H - 8}" text-anchor="middle">${esc(gw < 40 ? String(lb).replace('월', '') : lb)}</text>`;
+  });
+  s += `<line class="axis" x1="${pl}" x2="${W - pr}" y1="${pt + ih}" y2="${pt + ih}"/></svg><div class="tip"></div>`;
+  el.innerHTML = s;
+  const tip = el.querySelector('.tip');
+  el.querySelectorAll('.hit').forEach(h => {
+    h.addEventListener('mousemove', e => {
+      const i = +h.dataset.i, r = el.getBoundingClientRect();
+      tip.innerHTML = `<b>${esc(labels[i])}</b>` + series.map(se => `<div><i style="background:${se.color}"></i>${esc(se.name)} &nbsp;<strong>${won(se.values[i])}</strong>원</div>`).join('');
+      tip.style.display = 'block';
+      let x = e.clientX - r.left + 14; if (x + tip.offsetWidth > r.width) x = e.clientX - r.left - tip.offsetWidth - 14;
+      tip.style.left = x + 'px'; tip.style.top = Math.max(0, e.clientY - r.top - 20) + 'px';
+    });
+    h.addEventListener('mouseleave', () => tip.style.display = 'none');
+  });
+}
+function legend(items) { return `<div class="legend">${items.map(([n, c]) => `<span><i style="background:${c}"></i>${esc(n)}</span>`).join('')}</div>`; }
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- views ---------- */
+const views = {};
+let F = { q: '', year: 'all', status: 'open', stage: '', sort: 'acceptDate', dir: -1 };
+
+let DM = { year: new Date().getFullYear(), vat: true };
+let KY = new Date().getFullYear(); // 대시보드 윗줄 기준 연도 ('all' = 전체)
+function kpiHtml() {
+  const now = new Date(), Y = now.getFullYear(), all = KY === 'all', y = all ? 0 : +KY;
+  const cs = all ? S.cases : S.cases.filter(c => caseYear(c) === y), ids = new Set(cs.map(c => c.id));
+  let fee = 0, total = 0; for (const c of cs) { const s = sum(c); fee += s.fee; total += s.total; }
+  const arrow = d => `<span class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'}`;
+  // 수임액 비교: 올해는 전년 동기(지난달까지), 지난 해는 전년 전체
+  let feeCmp = '';
+  if (!all && y === Y) {
+    const M = Math.max(1, now.getMonth()), a = monthly(Y).slice(0, M).reduce((p, q) => p + q, 0), b = monthly(Y - 1).slice(0, M).reduce((p, q) => p + q, 0);
+    if (b) feeCmp = ` · 전년 동기 ${arrow(a - b)} ${pct(Math.abs(a / b - 1))}</span>`;
+  } else if (!all) { const p = yearStats(y - 1).fee; if (p) feeCmp = ` · 전년 대비 ${arrow(fee - p)} ${pct(Math.abs(fee / p - 1))}</span>`; }
+  // 입금액: 입금연도 기준
+  let paidFee = 0, paidTot = 0, paidN = 0;
+  for (const c of S.cases) for (const b of c.billings) if (b.paidDate && (all || +b.paidDate.slice(0, 4) === y) && billTotal(b)) { paidFee += b.fee; paidTot += billTotal(b); paidN++; }
+  // 수금 예정: 선택 연도에 수임한 사건의 미입금
+  const ub = unpaidBills().filter(x => ids.has(x.c.id)), unpaid = ub.reduce((a, x) => a + x.b.fee, 0), longN = ub.filter(x => isConfirmed(x.b) && x.elapsed > LONG_DAYS).length;
+  // 수임 건수 비교: 올해는 전년 같은 날까지, 지난 해는 전년 전체
+  let cntCmp = all ? `${years()[0]}년 개업 이후` : '';
+  if (!all && y === Y) { const ly = (Y - 1) + todayStr().slice(4), n = S.cases.filter(c => c.acceptDate && c.acceptDate.slice(0, 4) == Y - 1 && c.acceptDate <= ly).length; cntCmp = `전년 같은 날까지 ${n}건 ${arrow(cs.length - n)} ${Math.abs(cs.length - n)}</span>`; }
+  else if (!all) { const n = yearStats(y - 1).count; cntCmp = n ? `전년 ${n}건 ${arrow(cs.length - n)} ${Math.abs(cs.length - n)}</span>` : '첫 해'; }
+  const open = cs.filter(isOpen), dueSoon = open.filter(c => { const d = firstTodo(c)?.due; return d && days(todayStr(), d) <= 7; }).length;
+  const L = all ? '전체' : `${y}년`;
+  return `<div class="kpis k5">
+    <div class="kpi"><div class="l">${L} 수임액 총액</div><div class="v">${short(fee)}</div><div class="s">VAT 포함 ${short(total)}${feeCmp}</div></div>
+    <div class="kpi"><div class="l">${L} 입금액 총액</div><div class="v">${short(paidFee)}</div><div class="s">VAT 포함 ${short(paidTot)} · ${paidN}건 입금</div></div>
+    <div class="kpi"><div class="l">${all ? '' : L + ' 수임 '}수금 예정 (미입금)</div><div class="v">${short(unpaid)}</div><div class="s">VAT 포함 ${short(ub.reduce((a, x) => a + billTotal(x.b), 0))} · 예상 ${ub.filter(x => !isConfirmed(x.b)).length}건 · 확정 ${ub.filter(x => isConfirmed(x.b)).length}건${longN ? ` · <span class="down">확정 후 장기 ${longN}건</span>` : ''}</div></div>
+    <div class="kpi"><div class="l">${L} 수임 총건수</div><div class="v">${cs.length}건</div><div class="s">${cntCmp}</div></div>
+    <div class="kpi"><div class="l">${all ? '' : L + ' 수임 '}미결 사건</div><div class="v">${open.length}건</div><div class="s">${dueSoon ? `<span class="down">기한 임박·초과 ${dueSoon}건</span>` : '기한 임박 없음'}</div></div>
+  </div>`;
+}
+views.dashboard = () => {
+  const ub = unpaidBills();
+  const open = S.cases.filter(isOpen);
+  // 할 일 하나하나를 따로 (한 사건에 여러 개면 여러 줄), 기한 빠른 순
+  const todo = open.flatMap(c => todosOf(c).map(t => ({ c, t }))).sort((a, b) => (a.t.due || '9999') < (b.t.due || '9999') ? -1 : (a.t.due || '9999') > (b.t.due || '9999') ? 1 : 0).slice(0, 10);
+  const backupOld = SYNC.state === 'off' && (!S.meta.lastBackup || days(S.meta.lastBackup, todayStr()) > 7); // OneDrive 동기화 중이면 안내 생략
+  return `
+  ${backupOld ? `<div class="banner">⚠ <span>${S.meta.lastBackup ? `마지막 백업이 ${days(S.meta.lastBackup, todayStr())}일 전입니다.` : '아직 백업 파일을 만든 적이 없습니다.'} 데이터는 이 브라우저에 저장되므로 주기적으로 백업해 주세요.</span><span class="sp"></span><button class="btn sm" onclick="exportJSON()">지금 백업</button></div>` : ''}
+  <div class="head"><h1>경영 대시보드</h1><span class="sub">기준일 ${todayStr()} · 금액은 부가세 제외(별도 표시 제외)</span><span class="sp"></span><button class="btn pri" onclick="openCase()">+ 새 사건 수임</button></div>
+  <div class="filters" style="margin-bottom:10px"><select id="kpiYear"><option value="all" ${KY === 'all' ? 'selected' : ''}>전체 연도</option>${years().slice().reverse().map(y => `<option value="${y}" ${KY == y ? 'selected' : ''}>${y}년</option>`).join('')}</select><span class="muted" style="font-size:12.5px">윗줄 숫자의 기준 연도 · 수임액·건수·수금 예정·미결은 수임연도, 입금액은 입금연도 기준</span></div>
+  <div id="kpiRow">${kpiHtml()}</div>
+  <div class="card mb"><h2>진행 단계별 사건 <span class="note"><a href="#cases" onclick="F={...F,status:'open',year:'all',track:'',stage:'',q:''}">서류 미접수 ${open.filter(recvMissing).length}건 →</a> · 클릭하면 해당 사건 목록으로 이동</span></h2>
+    ${TRACK_NAMES.map(tr => { const oc = open.filter(c => c.track === tr), none = oc.filter(c => stageIdx(c) < 0).length; return `<div class="pipe-h">${trackBadge({ track: tr })} <span class="nowrap">미결 <b>${oc.length}</b>건</span>${none ? ` <a href="#cases" class="badge warn" onclick="F={...F,status:'open',track:'${tr}',stage:'__none',year:'all'}">● 단계 미지정 ${none}건 →</a>` : ''}</div>
+    <div class="pipe">${TRACKS[tr].slice(0, -1).map((st, i) => { const n = oc.filter(c => c.stage === st).length; return `<button class="${n ? '' : 'z'}" onclick="goStage('${tr}','${st}')"><span class="n">${n}</span><span class="k">${i + 1}. ${st}</span></button>`; }).join('')}</div>`; }).join('')}
+  </div>
+  <div class="grid g2 mb">
+    <div class="card"><h2>할 일 · 기한 <span class="note">미결 사건의 다음 할 일</span></h2>
+      <div class="list">${todo.length ? todo.map(({ c, t }) => `<div class="li" onclick="openCase('${c.id}')">${t.text ? `<input type="checkbox" class="todo-cb" title="완료 처리 (진행일지에 기록)" onclick="dashDone(event,'${c.id}','${t.id}')">` : '<span class="todo-cb"></span>'}<div class="m"><div><b>${esc(c.name)}</b></div><small>${esc(t.text || '다음 할 일 미입력')}${t.start ? ` · ${periodText(t)}` : ''} · ${esc(c.stage || '단계 미지정')}</small></div>${dueBadge(c, t)}</div>`).join('') : '<div class="empty">등록된 할 일이 없습니다. 사건 상세에서 “다음 할 일”과 기한을 입력하세요.</div>'}</div>
+    </div>
+    <div class="card"><h2>월별 예상 수금 <span class="note">예상 종결년월 기준 · VAT 포함 · <a href="#collect">수금 관리 →</a></span></h2>
+      ${expectedByMonthHtml(ub)}
+    </div>
+  </div>
+  <div class="card mb"><h2>월별 매출액 · 입금액 <span class="note">매출액 = 수임월 기준 · 입금액 = 입금월 기준</span></h2>
+    <div class="filters" style="margin-bottom:8px">
+      <select id="dmYear">${years().slice().reverse().map(y => `<option ${DM.year === y ? 'selected' : ''}>${y}</option>`).join('')}</select>
+      <div class="seg" id="dmVat"><button data-k="1" class="${DM.vat ? 'on' : ''}">VAT 포함</button><button data-k="0" class="${!DM.vat ? 'on' : ''}">VAT 제외</button></div>
+    </div>
+    <div class="tw" id="dmTable"></div>
+  </div>
+  <div class="grid g2 mb">
+    <div class="card"><h2>연도별 수수료 추이 <span class="note">수임연도 기준 · VAT 제외</span></h2><div class="chart" id="chYear"></div></div>
+    <div class="card"><h2>연도별 입금액 추이 <span class="note">입금연도 기준 · VAT 제외</span></h2><div class="chart" id="chYearPaid"></div></div>
+  </div>`;
+};
+// 다음 할 일 완료 → 진행일지에 기록하고 할 일·기한을 비움 (사건 상세와 대시보드에서 공용)
+// 대시보드 월별 예상 수금: 입금 안 된 청구를 사건의 예상 종결년월로 묶어 합계
+function expectedByMonthHtml(ub) {
+  const thisMonth = todayStr().slice(0, 7), g = {};
+  for (const x of ub) {
+    const k = !isOpen(x.c) ? 'done' : x.c.expectedClose || 'none';
+    g[k] ??= { k, fee: 0, total: 0, cases: new Map() };
+    g[k].fee += x.b.fee; g[k].total += billTotal(x.b); g[k].cases.set(x.c.id, x.c);
+  }
+  const order = k => k === 'done' ? 'zz' : k === 'none' ? 'zy' : k;
+  const rows = Object.values(g).sort((a, b) => order(a.k) < order(b.k) ? -1 : 1);
+  if (!rows.length) return '<div class="empty">수금 예정 건이 없습니다.</div>';
+  const label = r => r.k === 'done' ? '종결 · 입금 대기' : r.k === 'none' ? '예상 종결 미입력' : `${r.k.slice(0, 4)}년 ${+r.k.slice(5)}월`;
+  const badge = r => r.k === 'none' ? '<span class="badge warn">● 입력 필요</span>' : r.k !== 'done' && r.k < thisMonth ? '<span class="badge crit">⚠ 지남</span>' : r.k === thisMonth ? '<span class="badge acc">이번 달</span>' : '';
+  const sumT = rows.reduce((a, r) => a + r.total, 0), sumF = rows.reduce((a, r) => a + r.fee, 0);
+  return `<div class="list">${rows.map(r => `<div class="li" style="cursor:default;align-items:flex-start"><div class="m"><div><b>${label(r)}</b> ${badge(r)} <span class="muted">${r.cases.size}건</span></div><small>${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</small></div><div style="text-align:right"><b class="nowrap">${won(r.total)}원</b><br><small class="muted nowrap">수수료 ${won(r.fee)}</small></div></div>`).join('')}
+    <div class="li" style="cursor:default;border-top:1px solid var(--line-2)"><div class="m"><b>합계</b></div><div style="text-align:right"><b class="nowrap">${won(sumT)}원</b><br><small class="muted nowrap">수수료 ${won(sumF)}</small></div></div></div>`;
+}
+function completeTodo(c, tid) {
+  const list = todosOf(c), t = list.find(x => x.id === tid);
+  const tx = (t?.text || '').trim(); if (!tx) return false;
+  const today = todayStr(), late = t.due && t.due < today ? ` (기한 ${fmtDate(t.due)}, ${days(t.due, today)}일 지남)` : '';
+  c.logs.unshift({ date: today, text: `✓ 완료: ${tx}${t.start ? ` (${periodText(t)})` : ''}${late}` });
+  c.logs.sort((a, b) => a.date < b.date ? 1 : -1);
+  c.todos = list.filter(x => x !== t); syncTodos(c);
+  return true;
+}
+function dashDone(ev, id, tid) {
+  ev.stopPropagation();
+  const c = S.cases.find(x => x.id === id), cb = ev.target, t = todosOf(c).find(x => x.id === tid);
+  if (!t || !confirm(`“${t.text}” 완료 처리할까요?\n진행일지에 기록되고, 할 일 목록에서 빠집니다.`)) { cb.checked = false; return; }
+  completeTodo(c, tid); save(true); render(); toast(`${c.name} · 완료 기록을 진행일지에 추가했습니다`);
+}
+function drawDM() {
+  const sales = monthly(DM.year, 'accept', DM.vat), paid = monthly(DM.year, 'paid', DM.vat), t = a => a.reduce((x, y) => x + y, 0);
+  const now = new Date(), future = m => DM.year > now.getFullYear() || (DM.year === now.getFullYear() && m > now.getMonth());
+  const cell = (v, m) => `<td class="r ${future(m) ? 'muted' : ''}">${v ? won(v) : '<span class="muted">-</span>'}</td>`;
+  // 월평균: 다 지난 달만 평균 — 올해는 지난달까지(이번 달 제외), 개업 연도는 개업한 달부터
+  const opened = S.cases.map(c => c.acceptDate).filter(Boolean).sort()[0] || '';
+  const from = opened && +opened.slice(0, 4) === DM.year ? +opened.slice(5, 7) - 1 : 0; // 0부터 시작하는 월 번호
+  const to = DM.year < now.getFullYear() ? 12 : DM.year === now.getFullYear() ? now.getMonth() : 0; // 여기 전 달까지
+  const nMonths = Math.max(0, to - from);
+  const avg = vals => nMonths ? won(t(vals.slice(from, to)) / nMonths) : '<span class="muted">-</span>';
+  const row = (name, vals) => `<tr><td><b>${name}</b></td>${vals.map(cell).join('')}<td class="r"><b>${won(t(vals))}</b></td><td class="r">${avg(vals)}</td></tr>`;
+  const avgNote = nMonths ? `${from + 1}~${to}월 ${nMonths}개월` : '';
+  $('#dmTable').innerHTML = `<table class="t compact"><thead><tr><th>${DM.year}년</th>${[...Array(12)].map((_, i) => `<th class="r">${i + 1}월</th>`).join('')}<th class="r">합계</th><th class="r" title="${avgNote} 평균 (기준일 ${todayStr()})">월평균<br><span class="muted" style="font-weight:400">${nMonths ? nMonths + '개월' : ''}</span></th></tr></thead><tbody>
+    ${row('매출액', sales)}${row('입금액', paid)}</tbody></table>
+  <table class="t compact dm-split"><tbody>
+    <tr><th>${DM.year}년</th>${[1, 2, 3, 4, 5, 6].map(m => `<th class="r">${m}월</th>`).join('')}<th></th><th></th></tr>
+    ${[['매출액', sales], ['입금액', paid]].map(([n, v]) => `<tr><td><b>${n}</b></td>${v.slice(0, 6).map((x, i) => cell(x, i)).join('')}<td></td><td></td></tr>`).join('')}
+    <tr><th></th>${[7, 8, 9, 10, 11, 12].map(m => `<th class="r">${m}월</th>`).join('')}<th class="r">합계</th><th class="r" title="${avgNote} 평균 (기준일 ${todayStr()})">월평균 <span class="muted" style="font-weight:400">${nMonths ? nMonths + '개월' : ''}</span></th></tr>
+    ${[['매출액', sales], ['입금액', paid]].map(([n, v]) => `<tr><td><b>${n}</b></td>${v.slice(6).map((x, i) => cell(x, i + 6)).join('')}<td class="r"><b>${won(t(v))}</b></td><td class="r">${avg(v)}</td></tr>`).join('')}</tbody></table>`;
+}
+views.dashboard.after = () => {
+  const ys = years();
+  drawDM();
+  $('#kpiYear').addEventListener('change', e => { KY = e.target.value === 'all' ? 'all' : +e.target.value; $('#kpiRow').innerHTML = kpiHtml(); });
+  $('#dmYear').addEventListener('change', e => { DM.year = +e.target.value; drawDM(); });
+  $('#dmVat').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; DM.vat = k === '1'; document.querySelectorAll('#dmVat button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); drawDM(); });
+  const st = ys.map(y => yearStats(y));
+  barChart($('#chYear'), { labels: ys.map(y => y + ''), series: [{ name: '수수료', color: cssVar('--s1'), values: st.map(s => s.fee) }], valueLabels: st.map((_, i) => i) });
+  barChart($('#chYearPaid'), { labels: ys.map(y => y + ''), series: [{ name: '입금액', color: cssVar('--s2'), values: st.map(s => s.paidBasis) }], valueLabels: st.map((_, i) => i) });
+};
+function goStage(tr, st) { F = { ...F, status: 'open', track: tr, stage: st, year: 'all' }; location.hash = '#cases'; }
+
+/* 사건 관리 · 수임계약 관리 · 수금 관리 · 매출 현황 공용 필터 (연도 → 선임권/일반 → 전체·종결·미결 → 단계 → 검색) */
+function filterBarHtml(f, extra = '') {
+  const ys = years();
+  return `<div class="filters" id="fbar">
+    <select data-ff="year"><option value="all">전체 연도</option>${ys.map(y => `<option ${f.year == y ? 'selected' : ''}>${y}</option>`).join('')}</select>
+    <select data-ff="track"><option value="">선임권+일반</option>${TRACK_NAMES.map(t => `<option ${f.track === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <div class="seg" data-ff="status">${[['all', '전체'], ['done', '종결'], ['open', '미결']].map(([k, l]) => `<button data-k="${k}" class="${f.status === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <select data-ff="stage"><option value="">전체 단계</option><option value="__none" ${f.stage === '__none' ? 'selected' : ''}>단계 미지정</option>${(f.track ? TRACKS[f.track] : ALL_STAGES).map(s => `<option ${f.stage === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+    <input type="search" data-ff="q" placeholder="계약자·사건명·보험사·메모 검색" value="${esc(f.q)}">${extra}
+  </div>`;
+}
+function bindFilterBar(f, redraw) {
+  const bar = $('#fbar');
+  bar.querySelector('[data-ff=q]').addEventListener('input', e => { f.q = e.target.value; redraw(); });
+  bar.querySelector('[data-ff=status]').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; f.status = k; bar.querySelectorAll('[data-ff=status] button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); redraw(); });
+  bar.querySelector('[data-ff=track]').addEventListener('change', e => { f.track = e.target.value; if (f.track && f.stage && f.stage !== '__none' && !TRACKS[f.track].includes(f.stage)) f.stage = ''; render(); });
+  ['year', 'stage'].forEach(k => bar.querySelector(`[data-ff=${k}]`).addEventListener('change', e => { f[k] = e.target.value; redraw(); }));
+}
+function filterCases(f) {
+  const q = (f.q || '').trim().toLowerCase();
+  return S.cases.map(c => ({ c, s: sum(c) })).filter(({ c }) => {
+    if (f.status === 'open' && !isOpen(c)) return false;
+    if (f.status === 'done' && isOpen(c)) return false;
+    if (f.track && c.track !== f.track) return false;
+    if (f.year !== 'all' && caseYear(c) != f.year) return false;
+    if (f.stage && (f.stage === '__none' ? stageIdx(c) >= 0 : c.stage !== f.stage)) return false;
+    if (q && ![c.name, c.region, c.type, c.insurer, c.memo, ...todosOf(c).map(t => t.text), c.address, c.contract?.partner, ...c.logs.map(l => l.text)].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+views.cases = () => `<div class="head"><h1>사건 관리</h1><span class="sub">진행사고건 · 단계 · 할 일 · 청구/입금</span><span class="sp"></span><button class="btn" onclick="exportCSV()">엑셀(CSV) 내보내기</button><button class="btn pri" onclick="openCase()">+ 새 사건 수임</button></div>
+  ${filterBarHtml(F)}
+  <div class="sumline" id="caseSum"></div>
+  <div class="card" style="padding:0"><div class="tw tall" id="caseTable"></div></div>`;
+const filteredCases = () => filterCases(F);
+// 사건 목록 "다음 할 일" 칸: 가장 급한 할 일 + 나머지 개수 (마우스를 올리면 전체)
+function todoCell(c) {
+  const l = sortTodos(todosOf(c)), f = l[0]; if (!f) return '';
+  const all = l.map(t => `${t.start ? periodText(t) + ' ' : t.due ? fmtDate(t.due) + ' ' : ''}${t.text}`).join('\n');
+  return `<div class="na" title="${esc(all)}">${esc(f.text)}</div>${dueBadge(c, f)}${l.length > 1 ? ` <span class="muted" style="font-size:12px">외 ${l.length - 1}건</span>` : ''}`;
+}
+function renderCaseTable() {
+  const rows = filteredCases();
+  const key = F.sort, dir = F.dir;
+  const val = ({ c, s }) => key === 'fee' ? s.fee : key === 'vat' ? s.vat : key === 'total' ? s.total : key === 'elapsed' ? (s.procDays ?? s.elapsed ?? 0) : key === 'stage' ? stageIdx(c) / stagesOf(c).length : key === 'dueDate' ? (firstTodo(c)?.due || '9999') : key === 'expectedClose' ? (isOpen(c) ? c.expectedClose || '9999' : '99999') : (c[key] || '');
+  rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+  const th = (k, l, cls = '') => `<th class="sort ${cls}" data-k="${k}">${l}${F.sort === k ? (F.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+  const fee = rows.reduce((a, r) => a + r.s.fee, 0), unpaid = rows.reduce((a, r) => a + r.s.unpaidTotal, 0);
+  $('#caseSum').innerHTML = `<span>사건 <b>${rows.length}</b>건</span><span>수수료 합계 <b>${won(fee)}</b>원</span><span>미입금(VAT포함) <b>${won(unpaid)}</b>원</span>`;
+  $('#caseTable').innerHTML = rows.length ? `<table class="t ct"><thead><tr>${th('acceptDate', '수임일')}${th('name', '계약자 / 사건명')}${th('track', '구분')}${th('stage', '진행 단계')}<th>접수 서류</th>${th('fee', '수수료', 'r')}${th('vat', '부가세', 'r')}${th('total', '청구액<br><span class="muted" style="font-weight:400">(VAT포함)</span>', 'r')}${th('elapsed', '경과/<br>처리일', 'r')}${th('expectedClose', '예상 종결')}${th('dueDate', '다음 할 일')}</tr></thead><tbody>${rows.map(({ c, s }) => `<tr class="row" data-id="${c.id}">
+    <td class="nowrap">${fmtDate(c.acceptDate)}</td><td style="min-width:120px"><b>${esc(c.name)}</b>${c.insurer ? `<div class="muted" style="font-size:12px">${esc(c.insurer)}</div>` : ''}</td>
+    <td>${trackBadge(c)}</td><td>${stageHtml(c)}</td><td>${recvChips(c)}</td><td class="r">${s.fee ? won(s.fee) : '<span class="muted">-</span>'}</td><td class="r">${s.vat ? won(s.vat) : '<span class="muted">-</span>'}</td><td class="r">${s.total ? won(s.total) : '<span class="muted">-</span>'}</td>
+    <td class="r nowrap">${s.procDays != null ? s.procDays + '일' : s.elapsed != null && isOpen(c) ? `<span class="ink2">${s.elapsed}일째</span>` : '-'}</td>
+    <td class="nowrap">${expectedCloseHtml(c)}</td>
+    <td>${todoCell(c)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 사건이 없습니다.</div>';
+}
+views.cases.after = () => {
+  renderCaseTable();
+  bindFilterBar(F, renderCaseTable);
+  $('#caseTable').addEventListener('click', e => {
+    const h = e.target.closest('th.sort'); if (h) { const k = h.dataset.k; F.dir = F.sort === k ? -F.dir : (k === 'name' || k === 'region' || k === 'dueDate' || k === 'expectedClose' ? 1 : -1); F.sort = k; renderCaseTable(); return; }
+    const r = e.target.closest('tr.row'); if (r) openCase(r.dataset.id);
+  });
+};
+
+let CF = { q: '', year: 'all', status: 'open', track: '', stage: '', sort: 'contractDate', dir: -1 };
+views.contracts = () => `<div class="head"><h1>수임계약 관리</h1><span class="sub">계약 조건 · 공동수임(지분) · 접수 서류 확인</span><span class="sp"></span><button class="btn pri" onclick="openCase()">+ 새 수임계약</button></div>
+  ${filterBarHtml(CF)}
+  <div class="sumline" id="contractSum"></div>
+  <div class="card" style="padding:0"><div class="tw tall" id="contractTable"></div></div>`;
+function renderContractTable() {
+  const rows = filterCases(CF).map(x => x.c);
+  // 목록 제목을 눌러 정렬 (같은 제목을 다시 누르면 반대 순서)
+  const val = c => ({ contractDate: c.contract.date || c.acceptDate || '', name: c.name, rate: c.contract.rate || 0, share: c.contract.share ?? 1, partner: c.contract.partner || '￿', insurer: c.insurer || '￿',
+    recv: RECV.filter(([k]) => c.recv?.[k]).length, file: c.contract.file ? 0 : isOpen(c) ? 1 : 2, track: c.track, stage: isOpen(c) ? stageIdx(c) / stagesOf(c).length : 2, expectedClose: isOpen(c) ? c.expectedClose || '9999' : '99999' })[CF.sort];
+  rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * CF.dir; });
+  const th = (k, l, cls = '') => `<th class="sort ${cls}" data-k="${k}">${l}${CF.sort === k ? (CF.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+  const avgRate = rows.filter(c => c.contract.rate > 0); const ar = avgRate.length ? avgRate.reduce((a, c) => a + c.contract.rate, 0) / avgRate.length : 0;
+  $('#contractSum').innerHTML = `<span>계약 <b>${rows.length}</b>건</span><span>평균 계약요율 <b>${pct(ar)}</b></span><span>공동수임(지분 100% 미만) <b>${rows.filter(c => c.contract.share < 1).length}</b>건</span><span>계약서 첨부 <b>${rows.filter(c => c.contract.file).length}</b>건</span>`;
+  $('#contractTable').innerHTML = rows.length ? `<table class="t"><thead><tr>${th('contractDate', '계약일')}${th('name', '위임인 / 사건명')}${th('file', '계약서')}${th('rate', '계약요율', 'r')}${th('share', '지분', 'r')}${th('partner', '공동수임')}${th('insurer', '보험사')}${th('track', '구분')}${th('stage', '단계')}${th('expectedClose', '예상 종결')}</tr></thead><tbody>${rows.map(c => `<tr class="row" data-id="${c.id}"><td class="nowrap">${fmtDate(c.contract.date || c.acceptDate)}</td><td><b>${esc(c.name)}</b>${c.clientPhone ? `<div class="muted" style="font-size:12px">${esc(c.clientPhone)}</div>` : ''}</td><td class="nowrap">${contractFileCell(c)}</td><td class="r">${c.contract.rate ? pct(c.contract.rate) : '-'}</td><td class="r">${pct(c.contract.share ?? 1, 0)}</td><td>${esc(c.contract.partner) || '<span class="muted">-</span>'}</td><td>${esc(c.insurer) || '<span class="muted">-</span>'}</td><td>${trackBadge(c)}</td><td>${stageHtml(c)}</td><td class="nowrap">${expectedCloseHtml(c)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 계약이 없습니다.</div>';
+}
+views.contracts.after = () => {
+  renderContractTable();
+  bindFilterBar(CF, renderContractTable);
+  $('#contractTable').addEventListener('click', e => {
+    const h = e.target.closest('th.sort'); if (h) { const k = h.dataset.k; CF.dir = CF.sort === k ? -CF.dir : (['name', 'file', 'partner', 'insurer', 'track', 'expectedClose'].includes(k) ? 1 : -1); CF.sort = k; renderContractTable(); return; }
+    const r = e.target.closest('tr.row'); if (r) openCase(r.dataset.id);
+  });
+};
+
+let KF = { q: '', year: 'all', status: 'all', track: '', stage: '' };
+views.collect = () => `<div class="head"><h1>수금 관리</h1><span class="sub">입금 전 수수료 · 미결 사건은 <b>예상 수수료</b>, 종결 때 확정 수수료로 다시 입력 · 확정 후 ${LONG_DAYS}일 초과는 장기 미입금</span></div>
+  ${filterBarHtml(KF)}
+  <div id="collectBody"></div>`;
+views.collect.after = () => { renderCollect(); bindFilterBar(KF, renderCollect); };
+function renderCollect() {
+  const ids = new Set(filterCases(KF).map(x => x.c.id));
+  const ub = unpaidBills().filter(x => ids.has(x.c.id)), tot = ub.reduce((a, x) => a + billTotal(x.b), 0), fee = ub.reduce((a, x) => a + x.b.fee, 0);
+  const long = ub.filter(x => isConfirmed(x.b) && x.elapsed > LONG_DAYS);
+  const recent = []; const since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  for (const c of S.cases) if (ids.has(c.id)) for (const b of c.billings) if (b.paidDate && b.paidDate >= since) recent.push({ c, b });
+  recent.sort((a, b) => a.b.paidDate < b.b.paidDate ? 1 : -1);
+  $('#collectBody').innerHTML = `
+  <div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="kpi"><div class="l">수금 예정 (VAT 포함)</div><div class="v">${short(tot)}</div><div class="s">수수료 ${won(fee)}원</div></div>
+    <div class="kpi"><div class="l">예상 / 확정</div><div class="v">${ub.filter(x => !isConfirmed(x.b)).length} / ${ub.filter(x => isConfirmed(x.b)).length}건</div><div class="s">확정 수수료 ${short(ub.filter(x => isConfirmed(x.b)).reduce((a, x) => a + billTotal(x.b), 0))}</div></div>
+    <div class="kpi"><div class="l">장기 미입금 (${LONG_DAYS}일+)</div><div class="v ${long.length ? 'down' : ''}">${long.length}건</div><div class="s">${short(long.reduce((a, x) => a + billTotal(x.b), 0))}</div></div>
+    <div class="kpi"><div class="l">최근 90일 입금</div><div class="v">${short(recent.reduce((a, x) => a + billTotal(x.b), 0))}</div><div class="s">${recent.length}건</div></div>
+  </div>
+  <div class="card mb" style="padding:0"><div class="tw">${ub.length ? `<table class="t"><thead><tr><th>계약자 / 사건명</th><th>수임일</th><th>청구일</th><th>구분</th><th>단계</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">청구액<br><span class="muted" style="font-weight:400">(VAT포함)</span></th><th class="r">경과일</th><th>예상 종결</th><th>상태</th><th></th></tr></thead><tbody>${ub.map(x => `<tr class="row" data-id="${x.c.id}"><td style="min-width:120px"><b>${esc(x.c.name)}</b></td><td class="nowrap">${fmtDate(x.c.acceptDate)}</td><td class="nowrap">${fmtDate(x.b.billDate) || '<span class="muted">-</span>'}</td><td>${feeKind(x.b)}</td><td>${stageHtml(x.c)}</td><td class="r">${won(x.b.fee)}</td><td class="r">${x.b.vat ? won(x.b.vat) : '<span class="muted">-</span>'}</td><td class="r"><b>${won(billTotal(x.b))}</b></td><td class="r">${x.elapsed ?? '-'}일</td><td class="nowrap">${expectedCloseHtml(x.c)}</td><td>${!isConfirmed(x.b) ? '<span class="badge">미결</span>' : x.elapsed > LONG_DAYS ? '<span class="badge crit">⚠ 장기 미입금</span>' : '<span class="badge warn">● 입금 대기</span>'}</td><td><button class="btn sm" data-pay="${x.c.id}|${x.b.id}">${isConfirmed(x.b) ? '입금 처리' : '확정·입금 처리'}</button></td></tr>`).join('')}</tbody><tfoot><tr><td colspan="5">합계</td><td class="r">${won(fee)}</td><td class="r">${won(ub.reduce((a, x) => a + x.b.vat, 0))}</td><td class="r">${won(tot)}</td><td colspan="4"></td></tr></tfoot></table>` : '<div class="empty">조건에 맞는 미입금 건이 없습니다.</div>'}</div></div>
+  <div class="card"><h2>최근 90일 입금 내역</h2><div class="tw">${recent.length ? `<table class="t"><thead><tr><th>입금일</th><th>계약자 / 사건명</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">입금액(VAT포함)</th><th class="r">처리일수</th></tr></thead><tbody>${recent.map(x => `<tr class="row" data-id="${x.c.id}"><td>${fmtDate(x.b.paidDate)}</td><td>${esc(x.c.name)}</td><td class="r">${won(x.b.fee)}</td><td class="r">${x.b.vat ? won(x.b.vat) : '<span class="muted">-</span>'}</td><td class="r">${won(billTotal(x.b))}</td><td class="r">${x.c.acceptDate ? days(x.c.acceptDate, x.b.paidDate) + '일' : '-'}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">최근 90일 입금 내역이 없습니다.</div>'}</div></div>`;
+}
+function collectClick(e) {
+  if (location.hash !== '#collect') return;
+  const p = e.target.closest('[data-pay]');
+  if (p) { e.stopPropagation(); const [cid, bid] = p.dataset.pay.split('|'); payDialog(cid, bid); return; }
+  const r = e.target.closest('tr.row'); if (r) openCase(r.dataset.id);
+}
+function payDialog(cid, bid) {
+  const c = S.cases.find(x => x.id === cid), b = c.billings.find(x => x.id === bid);
+  const d = $('#dlg');
+  const est = !isConfirmed(b);
+  d.innerHTML = `<form method="dialog" style="width:min(480px,92vw)"><div class="dlg-h"><h3>${est ? '확정 수수료 입력 · 입금 처리' : '입금 처리'}</h3></div><div class="dlg-b"><p><b>${esc(c.name)}</b><br><span class="muted">${est ? `예상 수수료 ${won(b.fee)}원 (부가세 ${won(b.vat)}) — 확정된 금액으로 고쳐 주세요.` : `확정 청구액 ${won(billTotal(b))}원`}</span></p>
+    <div class="fg" style="grid-template-columns:1fr 1fr">
+      <label>확정 수수료<input class="num" id="cfFee" value="${won(b.fee)}"></label>
+      <label>부가세<span style="display:flex;gap:6px"><input class="num" id="cfVat" value="${won(b.vat)}"><button class="btn sm" type="button" id="cfVat10" title="수수료의 10%">10%</button></span></label>
+      <label>기타 청구 (실비 등)<input class="num" id="cfExtra" value="${won(b.extra || 0)}"></label>
+      <label>입금일<input type="date" id="payDate" value="${todayStr()}" required></label>
+    </div></div><div class="dlg-f"><span class="sp"></span><button class="btn" value="cancel">취소</button><button class="btn pri" value="ok" id="payOk">확정 · 입금 완료로 저장</button></div></form>`;
+  d.style.width = 'auto';
+  d.showModal();
+  $('#cfVat10').onclick = () => { $('#cfVat').value = won(Math.round(num($('#cfFee').value) * 0.1)); };
+  d.querySelectorAll('input.num').forEach(i => i.addEventListener('blur', () => { i.value = won(num(i.value)); }));
+  $('#payOk').onclick = ev => {
+    ev.preventDefault(); const v = $('#payDate').value; if (!v) return;
+    const nf = num($('#cfFee').value), nv = num($('#cfVat').value), ne = num($('#cfExtra').value);
+    if (est) { b.estFee = b.fee; b.estVat = b.vat; }
+    if (nf !== b.fee) c.logs.unshift({ date: v, text: `수수료 확정: 예상 ${won(b.estFee ?? b.fee)} → 확정 ${won(nf)}원` });
+    b.fee = nf; b.vat = nv; b.extra = ne; b.confirmed = true;
+    b.paidDate = v;
+    c.logs.unshift({ date: v, text: `입금 ${won(billTotal(b))}원` });
+    if (sum(c).unpaidTotal === 0 && isOpen(c)) c.stage = DONE;
+    save(); d.close(); d.style.width = ''; render();
+  };
+  d.addEventListener('close', () => d.style.width = '', { once: true });
+}
+
+let RF = { q: '', year: 'all', status: 'all', track: '', stage: '', basis: 'accept', vat: true };
+views.revenue = () => `<div class="head"><h1>매출 현황</h1><span class="sub">연도별 실적 · 월별 매출 · 동기 비교</span></div>
+  ${filterBarHtml(RF)}
+  <div id="revBody"></div>`;
+function revCases() { return filterCases({ ...RF, year: 'all' }).map(x => x.c); } // 연도는 표시 범위로만 사용 (입금연도·전년 비교 때문에)
+function renderRevenue() {
+  const cases = revCases();
+  const allYs = years(), ys = RF.year === 'all' ? allYs : [+RF.year];
+  const stAll = allYs.map(y => yearStats(y, cases)), st = stAll.filter(s => ys.includes(s.y));
+  const Y = new Date().getFullYear(), M = Math.max(1, new Date().getMonth());
+  const mats = ys.map(y => monthly(y, RF.basis, RF.vat, cases));
+  const matOf = y => monthly(y, RF.basis, RF.vat, cases);
+  const tot = st.reduce((a, s) => ({ count: a.count + s.count, claim: a.claim + s.claim, fee: a.fee + s.fee, expense: a.expense + s.expense, net: a.net + s.net, paidBasis: a.paidBasis + s.paidBasis, unpaid: a.unpaid + s.unpaid }), { count: 0, claim: 0, fee: 0, expense: 0, net: 0, paidBasis: 0, unpaid: 0 });
+  const ytd = y => matOf(y).slice(0, M).reduce((a, b) => a + b, 0);
+  const cy = ytd(Y), py = ytd(Y - 1), ppy = ytd(Y - 2);
+  const yearTotal = y => matOf(y).reduce((a, b) => a + b, 0);
+  $('#revBody').innerHTML = `
+  <div class="card mb"><h2>1. 연도별 실적 <span class="note">수임연도 기준 · ${Y}년 실적은 미확정(미결 사건은 예상 수수료 포함)</span></h2><div class="tw"><table class="t"><thead><tr><th>연도</th><th class="r">수임 건수</th><th class="r">지급보험금</th><th class="r">수수료</th><th class="r">전년 대비</th><th class="r">건당 평균</th><th class="r">평균 요율</th><th class="r">경비</th><th class="r">순이익</th><th class="r">입금기준 수수료</th><th class="r">미입금 수수료</th><th class="r">평균 처리일</th></tr></thead><tbody>${st.map(s => { const p = stAll.find(x => x.y === s.y - 1); const ch = p && p.fee ? s.fee / p.fee - 1 : null; return `<tr><td><b>${s.y}년</b></td><td class="r">${s.count}</td><td class="r">${won(s.claim)}</td><td class="r"><b>${won(s.fee)}</b></td><td class="r">${ch == null ? '-' : `<span class="${ch >= 0 ? 'up' : 'down'}">${ch >= 0 ? '▲' : '▼'} ${pct(Math.abs(ch))}</span>`}</td><td class="r">${won(s.avgFee)}</td><td class="r">${pct(s.avgRate)}</td><td class="r">${won(s.expense)}</td><td class="r">${won(s.net)}</td><td class="r">${won(s.paidBasis)}</td><td class="r">${s.unpaid ? `<span class="down">${won(s.unpaid)}</span>` : '0'}</td><td class="r">${s.avgDays ? Math.round(s.avgDays) + '일' : '-'}</td></tr>`; }).join('')}</tbody><tfoot><tr><td>합계</td><td class="r">${tot.count}</td><td class="r">${won(tot.claim)}</td><td class="r">${won(tot.fee)}</td><td></td><td class="r">${won(tot.count ? tot.fee / tot.count : 0)}</td><td></td><td class="r">${won(tot.expense)}</td><td class="r">${won(tot.net)}</td><td class="r">${won(tot.paidBasis)}</td><td class="r">${won(tot.unpaid)}</td><td></td></tr></tfoot></table></div>
+  <p class="muted" style="font-size:12px;margin:8px 0 0">순이익 = 수수료 + 부가세 − (지출부가세 + 소득세 + 경비) · 사건별로 입력된 값 기준</p></div>
+  <div class="filters"><div class="seg" id="rbasis"><button data-k="accept" class="${RF.basis === 'accept' ? 'on' : ''}">수임월 기준</button><button data-k="paid" class="${RF.basis === 'paid' ? 'on' : ''}">입금월 기준</button></div>
+  <div class="seg" id="rvat"><button data-k="1" class="${RF.vat ? 'on' : ''}">VAT 포함</button><button data-k="0" class="${!RF.vat ? 'on' : ''}">VAT 제외</button></div></div>
+  <div class="grid g-7-5 mb">
+    <div class="card"><h2>2. 월별 매출 ${RF.basis === 'accept' ? '(수임월 기준)' : '(입금월 기준)'} <span class="note">${RF.vat ? 'VAT 포함' : 'VAT 제외'}</span></h2><div class="tw"><table class="t"><thead><tr><th>월</th>${ys.map(y => `<th class="r">${y}년</th>`).join('')}</tr></thead><tbody>${[...Array(12)].map((_, m) => `<tr><td>${m + 1}월</td>${mats.map((mm, i) => `<td class="r ${ys[i] === Y && m >= new Date().getMonth() + 1 ? 'muted' : ''}">${mm[m] ? won(mm[m]) : '<span class="muted">-</span>'}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><td>합계</td>${mats.map(mm => `<td class="r">${won(mm.reduce((a, b) => a + b, 0))}</td>`).join('')}</tr></tfoot></table></div></div>
+    <div class="card"><h2>3. 동기 누계 비교 <span class="note">1~${M}월 (전월까지)</span></h2>
+      <table class="t"><tbody>
+        <tr><td>${Y - 2}년 동기 누계</td><td class="r">${won(ppy)}</td></tr>
+        <tr><td>${Y - 1}년 동기 누계</td><td class="r">${won(py)}</td></tr>
+        <tr><td><b>${Y}년 동기 누계</b></td><td class="r"><b>${won(cy)}</b></td></tr>
+        <tr><td>${Y} vs ${Y - 1} 증감</td><td class="r"><span class="${cy >= py ? 'up' : 'down'}">${won(cy - py)} (${py ? (cy >= py ? '▲ ' : '▼ ') + pct(Math.abs(cy / py - 1)) : '-'})</span></td></tr>
+        <tr><td>${Y}년 연간 예상 <span class="muted">(누계÷${M}×12)</span></td><td class="r"><b>${won(cy / M * 12)}</b></td></tr>
+        <tr><td>${Y - 1}년 실적 (연간)</td><td class="r">${won(yearTotal(Y - 1))}</td></tr>
+      </tbody></table>
+      <p class="muted" style="font-size:12px">연간 예상은 계절성을 반영하지 않은 단순 환산 참고치입니다.</p>
+      <h2 style="margin-top:18px">${Y}년 월별 추이</h2>${legend([[Y + '년', 'var(--s1)'], [(Y - 1) + '년', 'var(--cmp)']])}<div class="chart" id="chRev"></div>
+    </div>
+  </div>
+  ${expectedCloseTableHtml(cases)}`;
+  $('#rbasis').addEventListener('click', e => { if (e.target.dataset.k) { RF.basis = e.target.dataset.k; renderRevenue(); } });
+  $('#rvat').addEventListener('click', e => { if (e.target.dataset.k) { RF.vat = e.target.dataset.k === '1'; renderRevenue(); } });
+  barChart($('#chRev'), { height: 200, labels: [...Array(12)].map((_, i) => (i + 1) + ''), series: [{ name: (Y - 1) + '년', color: cssVar('--cmp'), values: matOf(Y - 1) }, { name: Y + '년', color: cssVar('--s1'), values: matOf(Y) }] });
+}
+views.revenue.after = () => { renderRevenue(); bindFilterBar(RF, renderRevenue); };
+// 매출 현황 4번: 입금 전 금액을 예상 종결년월별로 (위 필터 적용)
+function expectedCloseTableHtml(cases) {
+  const ids = new Set(cases.map(c => c.id)), thisMonth = todayStr().slice(0, 7), g = {};
+  for (const x of unpaidBills()) {
+    if (!ids.has(x.c.id)) continue;
+    const k = !isOpen(x.c) ? 'done' : x.c.expectedClose || 'none';
+    g[k] ??= { k, fee: 0, vat: 0, total: 0, cases: new Map() };
+    g[k].fee += x.b.fee; g[k].vat += x.b.vat; g[k].total += billTotal(x.b); g[k].cases.set(x.c.id, x.c);
+  }
+  const order = k => k === 'done' ? 'zz' : k === 'none' ? 'zy' : k;
+  const rows = Object.values(g).sort((a, b) => order(a.k) < order(b.k) ? -1 : 1);
+  const label = r => r.k === 'done' ? '종결 · 입금 대기' : r.k === 'none' ? '미입력' : `${r.k.slice(0, 4)}년 ${+r.k.slice(5)}월`;
+  const badge = r => r.k === 'none' ? ' <span class="badge warn">● 입력 필요</span>' : r.k !== 'done' && r.k < thisMonth ? ' <span class="badge crit">⚠ 지남</span>' : r.k === thisMonth ? ' <span class="badge acc">이번 달</span>' : '';
+  const s = f => won(rows.reduce((a, r) => a + r[f], 0));
+  return `<div class="card"><h2>4. 예상 종결별 수금 예정 <span class="note">미입금 금액 · 사건의 예상 종결년월 기준 · 위 필터 적용</span></h2>${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th class="r">건수</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">청구액(VAT포함)</th><th>사건</th></tr></thead><tbody>${rows.map(r => `<tr><td class="nowrap"><b>${label(r)}</b>${badge(r)}</td><td class="r">${r.cases.size}</td><td class="r">${won(r.fee)}</td><td class="r">${won(r.vat)}</td><td class="r"><b>${won(r.total)}</b></td><td style="white-space:normal;min-width:260px">${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody><tfoot><tr><td>합계</td><td class="r">${rows.reduce((a, r) => a + r.cases.size, 0)}</td><td class="r">${s('fee')}</td><td class="r">${s('vat')}</td><td class="r">${s('total')}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">조건에 맞는 수금 예정 건이 없습니다.</div>'}</div>`;
+}
+
+function halfRange(t) {
+  const l = (t.label || '').replace(/\s/g, '');
+  if (l === '상반기') return [t.year + '-01-01', t.year + '-06-30'];
+  if (l === '후반기' || l === '하반기') return [t.year + '-07-01', t.year + '-12-31'];
+  return null;
+}
+function autoVat(t) {
+  const r = halfRange(t); if (!r) return null; let v = 0;
+  for (const c of S.cases) for (const b of c.billings) if (b.paidDate && b.paidDate >= r[0] && b.paidDate <= r[1]) v += b.vat;
+  return v;
+}
+// 예상 종결 기준 예정 매출세액: 아직 입금 안 된 미결 사건의 부가세를 예상 종결년월이 속한 반기에 넣음
+function expectedVat(t) {
+  const r = halfRange(t); if (!r) return null; let v = 0;
+  for (const x of unpaidBills()) if (isOpen(x.c) && x.c.expectedClose && x.c.expectedClose >= r[0].slice(0, 7) && x.c.expectedClose <= r[1].slice(0, 7)) v += x.b.vat;
+  return v;
+}
+// 부가세·소득세 탭: 예상 종결년월별 예정 매출세액 (반기별로 묶음)
+function taxExpectedCardHtml() {
+  const g = {};
+  for (const x of unpaidBills()) {
+    if (!isOpen(x.c)) continue;
+    const k = x.c.expectedClose || 'none';
+    g[k] ??= { k, vat: 0, fee: 0, cases: new Map() };
+    g[k].vat += x.b.vat; g[k].fee += x.b.fee; g[k].cases.set(x.c.id, x.c);
+  }
+  const rows = Object.values(g).sort((a, b) => (a.k === 'none' ? 'z' : a.k) < (b.k === 'none' ? 'z' : b.k) ? -1 : 1);
+  const half = k => k === 'none' ? '-' : `${k.slice(0, 4)}년 ${+k.slice(5) <= 6 ? '상반기' : '후반기'}`;
+  const sum = f => won(rows.reduce((a, r) => a + r[f], 0));
+  return `<div class="card mb"><h2>예상 종결별 예정 매출세액 <span class="note">미결 사건의 미입금 부가세 · 예상 종결년월 기준</span></h2>${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th>신고 반기</th><th class="r">건수</th><th class="r">수수료</th><th class="r">부가세(매출세액)</th><th>사건</th></tr></thead><tbody>${rows.map(r => `<tr><td class="nowrap"><b>${r.k === 'none' ? '미입력' : `${r.k.slice(0, 4)}년 ${+r.k.slice(5)}월`}</b>${r.k === 'none' ? ' <span class="badge warn">● 입력 필요</span>' : r.k < todayStr().slice(0, 7) ? ' <span class="badge crit">⚠ 지남</span>' : ''}</td><td class="nowrap">${half(r.k)}</td><td class="r">${r.cases.size}</td><td class="r">${won(r.fee)}</td><td class="r"><b>${won(r.vat)}</b></td><td style="white-space:normal;min-width:240px">${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="2">합계</td><td class="r">${rows.reduce((a, r) => a + r.cases.size, 0)}</td><td class="r">${sum('fee')}</td><td class="r">${sum('vat')}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">미결 사건의 수금 예정 건이 없습니다.</div>'}</div>`;
+}
+views.tax = () => {
+  const rows = [...S.tax].sort((a, b) => a.year - b.year || (a.label > b.label ? 1 : -1));
+  let tS = 0, tE = 0, tI = 0;
+  const body = rows.map(t => {
+    const gain = t.salesVat - t.expVat; tS += t.salesVat; tE += t.expVat; tI += t.incomeTax; const av = autoVat(t), ev = expectedVat(t);
+    return `<tr data-id="${t.id}"><td><input class="cell" style="text-align:left;width:64px" data-f="year" value="${t.year}"></td><td><input class="cell" style="text-align:left;width:90px" data-f="label" value="${esc(t.label)}"></td>
+    <td class="r"><input class="cell" data-f="salesVat" value="${won(t.salesVat)}"></td><td class="r muted" title="입금일 기준으로 자동 집계한 참고값">${av == null ? '-' : won(av)}</td><td class="r" title="미결 사건 중 예상 종결이 이 반기인 건의 부가세">${ev ? won(ev) : '<span class="muted">-</span>'}</td>
+    <td class="r"><input class="cell" data-f="expVat" value="${won(t.expVat)}"></td><td class="r">${t.salesVat ? pct(t.expVat / t.salesVat) : '-'}</td>
+    <td class="r"><b>${won(gain)}</b></td><td class="r">${t.salesVat ? pct(gain / t.salesVat) : '-'}</td>
+    <td class="r"><input class="cell" data-f="incomeTax" value="${won(t.incomeTax)}"></td><td><input class="cell" style="text-align:left;min-width:120px" data-f="memo" value="${esc(t.memo)}" placeholder="메모"></td>
+    <td class="nowrap acts">${halfRange(t) ? `<button class="btn sm" data-alloc="${t.id}" title="이 기간 입금된 사건에 지출부가세·소득세를 비율대로 배분">사건별 배분</button>` : ''} <button class="btn sm dan" data-del="${t.id}">삭제</button></td></tr>`;
+  }).join('');
+  return `<div class="head"><h1>부가세 · 소득세</h1><span class="sub">반기별 신고 내역 · 셀을 클릭해 바로 수정</span><span class="sp"></span><button class="btn pri" id="taxAdd">+ 신고 기간 추가</button></div>
+  <div class="card mb" style="padding:0"><div class="tw"><table class="t taxt"><thead><tr><th>연도</th><th>구분</th><th class="r">매출세액</th><th class="r">자동집계(참고)</th><th class="r">예정(예상 종결)</th><th class="r">지출부가세</th><th class="r">지출율</th><th class="r">이득 부가세</th><th class="r">환급율</th><th class="r">소득세</th><th>메모</th><th></th></tr></thead><tbody>${body}</tbody>
+  <tfoot><tr><td colspan="2">합계</td><td class="r">${won(tS)}</td><td></td><td></td><td class="r">${won(tE)}</td><td class="r">${tS ? pct(tE / tS) : '-'}</td><td class="r">${won(tS - tE)}</td><td></td><td class="r">${won(tI)}</td><td colspan="2"></td></tr></tfoot></table></div></div>
+  ${taxExpectedCardHtml()}
+  <div class="card"><h2>사용 안내</h2><ul class="ink2" style="margin:0;padding-left:18px;font-size:13px">
+    <li><b>매출세액</b>은 실제 신고한 금액을 입력합니다. <b>자동집계</b>는 해당 반기에 입금된 사건의 부가세 합계로, 대조용 참고값입니다(구분이 ‘상반기’/‘후반기’일 때만 계산).</li>
+    <li><b>예정(예상 종결)</b>은 아직 입금되지 않은 미결 사건 중 예상 종결년월이 그 반기에 속하는 건의 부가세 합계입니다. 신고 전에 들어올 매출세액을 미리 가늠할 때 참고하세요.</li>
+    <li><b>이득 부가세</b> = 매출세액 − 지출부가세, <b>환급율</b> = 이득 부가세 ÷ 매출세액 (엑셀과 동일).</li>
+    <li><b>사건별 배분</b>: 그 반기에 입금된 사건들에 지출부가세(부가세 비율)와 소득세(청구액 비율)를 나눠 넣어, 사건별 순이익에 반영합니다. 기존 배분값을 덮어씁니다.</li></ul></div>`;
+};
+views.tax.after = () => {
+  const tb = document.querySelector('tbody');
+  tb.addEventListener('change', e => {
+    const f = e.target.dataset.f; if (!f) return; const t = S.tax.find(x => x.id === e.target.closest('tr').dataset.id);
+    t[f] = f === 'label' || f === 'memo' ? e.target.value : num(e.target.value); save(); render();
+  });
+  tb.addEventListener('click', e => {
+    const del = e.target.dataset.del, al = e.target.dataset.alloc;
+    if (del && confirm('이 신고 기간을 삭제할까요?')) { S.tax = S.tax.filter(x => x.id !== del); save(); render(); }
+    if (al) allocate(S.tax.find(x => x.id === al));
+  });
+  $('#taxAdd').onclick = () => { const y = new Date().getFullYear(); S.tax.push({ id: uid(), year: y, label: new Date().getMonth() < 6 ? '상반기' : '후반기', salesVat: 0, expVat: 0, incomeTax: 0, memo: '' }); save(); render(); };
+};
+function allocate(t) {
+  const r = halfRange(t); const bs = [];
+  for (const c of S.cases) for (const b of c.billings) if (b.paidDate && b.paidDate >= r[0] && b.paidDate <= r[1]) bs.push(b);
+  if (!bs.length) return alert('이 기간에 입금된 사건이 없습니다.');
+  const sv = bs.reduce((a, b) => a + b.vat, 0), st = bs.reduce((a, b) => a + billTotal(b), 0);
+  if (!confirm(`${t.year}년 ${t.label}: 입금된 ${bs.length}건에\n지출부가세 ${won(t.expVat)}원${t.incomeTax ? `, 소득세 ${won(t.incomeTax)}원` : ''}을 배분합니다.\n기존 사건별 배분값을 덮어씁니다. 계속할까요?`)) return;
+  for (const b of bs) { b.expVat = sv ? Math.round(t.expVat * b.vat / sv) : 0; if (t.incomeTax) b.incomeTax = st ? Math.round(t.incomeTax * billTotal(b) / st) : 0; }
+  save(); toast(`${bs.length}건에 배분했습니다`);
+}
+
+function syncCardHtml() {
+  if (WEB) return webCardHtml();
+  const st = SYNC.state, m = S.meta || {};
+  const stateText = { off: '<span class="badge">연결 안 됨 · 이 PC 브라우저에만 저장</span>', need: '<span class="badge warn">● 다시 연결 필요</span>', ok: '<span class="badge good">✓ 동기화 중</span>', conflict: '<span class="badge crit">⚠ 충돌</span>', error: '<span class="badge crit">⚠ 오류</span>' }[st];
+  const btns = !fsSupported() ? '<span class="down">이 브라우저에서는 쓸 수 없습니다. 엣지(Edge)로 열어 주세요.</span>'
+    : st === 'off' ? `<button class="btn pri" onclick="syncCreateFile()">새 데이터 파일 만들기</button><button class="btn" onclick="syncOpenFile()">기존 데이터 파일 열기</button>`
+    : st === 'need' ? `<button class="btn pri" onclick="syncReconnect()">다시 연결</button><button class="btn" onclick="syncOpenFile()">다른 데이터 파일 열기</button><button class="btn dan" onclick="syncDisconnect()">연결 끊기</button>`
+    : `<button class="btn" onclick="syncCheckNow()">지금 최신 상태 확인</button><button class="btn" onclick="syncOpenFile()">다른 데이터 파일 열기</button><button class="btn dan" onclick="syncDisconnect()">연결 끊기</button>`;
+  return `<div class="card mb"><h2>OneDrive 동기화 ${stateText}</h2>
+    <div class="grid g2">
+      <div>
+        <div class="fg" style="grid-template-columns:1fr;max-width:320px;margin-bottom:12px"><label>이 PC 이름 <input id="pcName" value="${esc(pcName())}" placeholder="예: 노트북, 사무실" onchange="setPcName(this.value)"><span class="hint">어느 PC에서 저장했는지 기록할 때 씁니다</span></label></div>
+        <div class="tw"><table class="t"><tbody>
+          <tr><td class="ink2">데이터 파일</td><td>${SYNC.handle ? `<b>${esc(SYNC.handle.name)}</b>` : '<span class="muted">-</span>'}</td></tr>
+          <tr><td class="ink2">마지막 파일 저장</td><td>${m.savedAtIso && SYNC.handle ? `${esc(m.savedBy || '')} · ${fmtIso(m.savedAtIso)} (저장 번호 ${m.rev || 0})` : '<span class="muted">-</span>'}</td></tr>
+          <tr><td class="ink2">마지막 확인</td><td>${SYNC.lastCheck || '<span class="muted">-</span>'}</td></tr>
+          <tr><td class="ink2">계약서 폴더</td><td>${DIR.state === 'ok' ? `<span class="badge good">✓ 연결됨</span> ${esc(DIR.handle.name)}` : DIR.state === 'need' ? `<span class="badge warn">● 다시 허용 필요</span> ${esc(DIR.handle.name)}` : '<span class="muted">연결 안 됨</span>'} ${DIR.state === 'need' ? '<button class="btn sm pri" onclick="prepareContractDir()">다시 허용</button> ' : ''}<button class="btn sm" onclick="connectContractDir()">${DIR.state === 'off' ? '계약서 폴더 연결' : '다른 폴더로 바꾸기'}</button></td></tr>
+        </tbody></table></div>
+        <p style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0">${btns}</p>
+      </div>
+      <div class="ink2" style="font-size:13px">
+        <b>처음 설정 (한 번만)</b>
+        <ol style="margin:6px 0 10px;padding-left:18px">
+          <li><b>노트북</b>: “이 PC 이름”에 <i>노트북</i> 입력 → <b>새 데이터 파일 만들기</b> → OneDrive 폴더 안에 저장</li>
+          <li>OneDrive 동기화가 끝날 때까지 잠시 기다리기 (작업 표시줄 구름 아이콘)</li>
+          <li><b>사무실 PC</b>: 엣지로 프로그램 열기 → “이 PC 이름”에 <i>사무실</i> 입력 → <b>기존 데이터 파일 열기</b> → 같은 파일 선택 → “편집 허용”</li>
+          <li><b>각 PC</b>: <b>계약서 폴더 연결</b> → OneDrive → 번영손해사정 → <i>계약서</i> 폴더 선택 (계약서 첨부·열기에 필요)</li>
+        </ol>
+        <b>사용할 때</b>
+        <ul style="margin:6px 0 0;padding-left:18px">
+          <li>저장하면 데이터 파일에 바로 기록되고, 다른 PC는 30초마다·창으로 돌아올 때 최신 데이터를 불러옵니다.</li>
+          <li>프로그램을 다시 열면 엣지가 파일 권한을 다시 물을 수 있습니다. 위쪽 <b>[다시 연결]</b>을 누르고 “편집 허용”을 선택하세요.</li>
+          <li><b>두 PC에서 동시에 수정하지 마세요.</b> 겹치면 어느 쪽을 남길지 묻는 안내가 나옵니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>`;
+}
+views.settings = () => `<div class="head"><h1>백업 · 설정</h1></div>
+  ${syncCardHtml()}
+  <div class="grid g2">
+    <div class="card"><h2>데이터 백업</h2><p class="ink2" style="font-size:13px;margin-top:0">${SYNC.state === 'off' ? '지금은 데이터가 <b>이 컴퓨터의 이 브라우저</b>에만 저장됩니다. 브라우저 기록(사이트 데이터)을 지우면 사라질 수 있으니 OneDrive 동기화를 켜거나 백업 파일을 주기적으로 만들어 두세요.' : 'OneDrive 데이터 파일에 저장 중입니다. OneDrive의 “버전 기록”으로 예전 상태도 되살릴 수 있지만, 가끔 백업 파일을 따로 만들어 두면 더 안전합니다.'}</p>
+      <p style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="exportJSON()">백업 파일 저장 (.json)</button><button class="btn" onclick="$('#fileIn').click()">백업 파일 불러오기</button></p>
+      <p class="muted" style="font-size:12px">마지막 백업: ${S.meta.lastBackup || '없음'} · 엑셀에서 가져온 날: ${S.meta.importedAt || '-'}</p></div>
+    <div class="card"><h2>엑셀로 내보내기</h2><p class="ink2" style="font-size:13px;margin-top:0">사건·청구 내역을 엑셀에서 열 수 있는 CSV 파일로 저장합니다 (한 행 = 청구 1건).</p><button class="btn" onclick="exportCSV()">사건 목록 CSV 저장</button></div>
+    <div class="card"><h2>현황</h2><table class="t"><tbody><tr><td>사건 수</td><td class="r">${S.cases.length}건</td></tr><tr><td>청구 내역</td><td class="r">${S.cases.reduce((a, c) => a + c.billings.length, 0)}건</td></tr><tr><td>진행일지 기록</td><td class="r">${S.cases.reduce((a, c) => a + c.logs.length, 0)}건</td></tr><tr><td>세무 신고 기간</td><td class="r">${S.tax.length}개</td></tr></tbody></table></div>
+    <div class="card"><h2>초기화</h2><p class="ink2" style="font-size:13px;margin-top:0">모든 변경 내용을 지우고 처음 엑셀(번영손해사정.xlsx)에서 가져온 상태로 되돌립니다. 되돌릴 수 없으니 먼저 백업하세요.</p><button class="btn dan" onclick="resetAll()">엑셀 원본 상태로 초기화</button></div>
+  </div>`;
+
+/* ---------- 영업 리드 (노션 "번영손해사정 영업리드 DB"에서 옮겨 옴, 2026-10-07부터 이 프로그램에서 관리) ---------- */
+const LEAD_STAGES = ['사고 인지', '상담 진행', '보류', '수임 성공', '수임 실패'];
+const LEAD_OPEN = ['사고 인지', '상담 진행', '보류'];
+const LEAD_TYPES = ['화재', '누수', '배상책임', '기타'];
+const LEAD_REGIONS = ['대전', '세종', '충북', '충남', '기타'];
+const LEAD_RIGHTS = ['해당 없음', '검토 중', '선임권 행사', '거절/철회'];
+const LEAD_SOURCES = ['소방서 검색', '뉴스 기사', '소개', '블로그/검색', '기존 고객 재의뢰', '소비자선임권 상담', '협업 업체', '기타'];
+const LEAD_FAILS = ['복구업체 선임', '보수율 불일치', '보험사 직접 처리', '면책 판정', '타 손해사정사 선임', '연락 두절', '소액 사건', '기타'];
+const leadsOf = () => S.leads || [];
+const leadOpen = l => LEAD_OPEN.includes(l.stage);
+const leadFee = l => Math.round((l.estLoss || 0) * (l.rate || 0)); // 예상 보수 = 추정 손해액 × 약정 보수율
+const leadYear = l => +(l.contactDate || l.accidentDate || '').slice(0, 4) || null;
+function leadStageBadge(l) {
+  const cls = { '사고 인지': 'acc', '상담 진행': 'acc', '보류': '', '수임 성공': 'good', '수임 실패': '' }[l.stage] ?? '';
+  return `<span class="badge ${cls}"${l.stage === '수임 실패' ? ' style="color:var(--muted)"' : ''}>${esc(l.stage || '미지정')}</span>`;
+}
+function leadDateBadge(l) { // 다음 연락일: 진행 중인 리드만
+  if (!l.nextDate || !leadOpen(l)) return '';
+  const d = days(todayStr(), l.nextDate);
+  if (d < 0) return `<span class="badge crit">⚠ 연락 ${-d}일 지남</span>`;
+  if (d === 0) return '<span class="badge warn">● 오늘 연락</span>';
+  if (d <= 3) return `<span class="badge warn">● 연락 D-${d}</span>`;
+  return `<span class="badge">연락 ${md(l.nextDate)}</span>`;
+}
+let LF = { q: '', year: 'all', status: 'all', type: '', region: '', sort: 'no', dir: -1 };
+function filterLeads(f) {
+  const q = (f.q || '').trim().toLowerCase();
+  return leadsOf().filter(l => {
+    if (f.year !== 'all' && leadYear(l) != f.year) return false;
+    if (f.status === 'open' && !leadOpen(l)) return false;
+    if (f.status === 'won' && l.stage !== '수임 성공') return false;
+    if (f.status === 'lost' && l.stage !== '수임 실패') return false;
+    if (f.type && l.type !== f.type) return false;
+    if (f.region && l.region !== f.region) return false;
+    if (q && ![l.name, l.phone, l.nextAction, l.memo, l.source, l.failReason].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+views.leads = () => {
+  const ys = [...new Set(leadsOf().map(leadYear).filter(Boolean))].sort();
+  return `<div class="head"><h1>영업 리드</h1><span class="sub">사고 인지 → 상담 → 수임 · 수임 성공하면 [사건으로 등록]</span><span class="sp"></span><button class="btn pri" onclick="openLead()">+ 새 리드</button></div>
+  <div id="leadKpi"></div>
+  <div class="filters" id="lbar">
+    <select data-lf="year"><option value="all">전체 연도</option>${ys.map(y => `<option ${LF.year == y ? 'selected' : ''}>${y}</option>`).join('')}</select>
+    <div class="seg" data-lf="status">${[['all', '전체'], ['open', '진행 중'], ['won', '수임 성공'], ['lost', '수임 실패']].map(([k, l]) => `<button data-k="${k}" class="${LF.status === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <select data-lf="type"><option value="">전체 유형</option>${LEAD_TYPES.map(t => `<option ${LF.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <select data-lf="region"><option value="">전체 지역</option>${LEAD_REGIONS.map(t => `<option ${LF.region === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <input type="search" data-lf="q" placeholder="사건명·연락처·다음 액션·메모 검색" value="${esc(LF.q)}">
+  </div>
+  <div class="sumline" id="leadSum"></div>
+  <div class="card mb" style="padding:0"><div class="tw tall" id="leadTable"></div></div>
+  <div id="leadStats"></div>`;
+};
+function renderLeads() {
+  const all = filterLeads({ ...LF, status: 'all' }), rows = filterLeads(LF);
+  const open = all.filter(leadOpen), wins = all.filter(l => l.stage === '수임 성공'), lost = all.filter(l => l.stage === '수임 실패');
+  const due = open.filter(l => l.nextDate && l.nextDate <= todayStr()).length;
+  const rate = wins.length + lost.length ? wins.length / (wins.length + lost.length) : null;
+  const topFail = Object.entries(lost.reduce((a, l) => (a[l.failReason || '사유 미입력'] = (a[l.failReason || '사유 미입력'] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1])[0];
+  $('#leadKpi').innerHTML = `<div class="kpis k5">
+    <div class="kpi"><div class="l">전체 리드</div><div class="v">${all.length}건</div><div class="s">예상 보수 합계 ${short(all.reduce((a, l) => a + leadFee(l), 0))}</div></div>
+    <div class="kpi"><div class="l">진행 중 (사고 인지·상담·보류)</div><div class="v">${open.length}건</div><div class="s">예상 보수 ${short(open.reduce((a, l) => a + leadFee(l), 0))}</div></div>
+    <div class="kpi"><div class="l">수임 성공</div><div class="v">${wins.length}건</div><div class="s">성공률 ${rate == null ? '-' : pct(rate, 0)} (성공 ÷ 성공+실패)</div></div>
+    <div class="kpi"><div class="l">수임 실패</div><div class="v">${lost.length}건</div><div class="s">${topFail ? `가장 많은 사유: ${esc(topFail[0])} ${topFail[1]}건` : '-'}</div></div>
+    <div class="kpi"><div class="l">연락할 리드 (오늘·지남)</div><div class="v ${due ? 'down' : ''}">${due}건</div><div class="s">진행 중 리드의 다음 연락일 기준</div></div>
+  </div>`;
+  const key = LF.sort, dir = LF.dir;
+  const val = l => key === 'fee' ? leadFee(l) : key === 'estLoss' || key === 'rate' || key === 'no' ? (l[key] || 0) : key === 'stage' ? LEAD_STAGES.indexOf(l.stage) : key === 'nextDate' ? (leadOpen(l) && l.nextDate || '9999') : (l[key] || '');
+  rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+  const th = (k, l, cls = '') => `<th class="sort ${cls}" data-k="${k}">${l}${LF.sort === k ? (LF.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
+  $('#leadSum').innerHTML = `<span>리드 <b>${rows.length}</b>건</span><span>추정 손해액 합계 <b>${won(rows.reduce((a, l) => a + (l.estLoss || 0), 0))}</b>원</span><span>예상 보수 합계 <b>${won(rows.reduce((a, l) => a + leadFee(l), 0))}</b>원</span>`;
+  const result = l => l.caseId && S.cases.some(c => c.id === l.caseId) ? `<a href="#" data-case="${l.caseId}">📁 사건 보기</a>` : l.stage === '수임 성공' ? '<span class="badge warn">사건 미등록</span>' : l.failReason ? `<span class="muted">${esc(l.failReason)}</span>` : '';
+  $('#leadTable').innerHTML = rows.length ? `<table class="t ct"><thead><tr>${th('no', '순번', 'r')}${th('name', '사건명')}${th('type', '유형 / 지역')}${th('stage', '진행 단계')}${th('accidentDate', '사고일 / 접촉일')}${th('estLoss', '추정 손해액', 'r')}${th('rate', '보수율', 'r')}${th('fee', '예상 보수', 'r')}${th('consumerRight', '선임권')}${th('nextDate', '다음 액션')}<th>결과</th></tr></thead><tbody>${rows.map(l => `<tr class="row" data-id="${l.id}">
+    <td class="r">${l.no ?? ''}</td>
+    <td style="min-width:130px"><b>${esc(l.name)}</b>${l.phone ? `<div class="muted" style="font-size:12px">${esc(l.phone)}</div>` : ''}</td>
+    <td class="nowrap">${esc(l.type || '-')}<div class="muted" style="font-size:12px">${esc(l.region || '')}</div></td>
+    <td>${leadStageBadge(l)}</td>
+    <td class="nowrap">${fmtDate(l.accidentDate) || '-'}<div class="muted" style="font-size:12px">${l.contactDate ? '접촉 ' + fmtDate(l.contactDate) : ''}</div></td>
+    <td class="r">${l.estLoss ? won(l.estLoss) : '<span class="muted">-</span>'}</td><td class="r">${l.rate ? pct(l.rate, 1) : '<span class="muted">-</span>'}</td><td class="r">${leadFee(l) ? `<b>${won(leadFee(l))}</b>` : '<span class="muted">-</span>'}</td>
+    <td class="nowrap">${l.consumerRight === '선임권 행사' ? '<span class="badge good">선임권 행사</span>' : `<span class="muted">${esc(l.consumerRight || '-')}</span>`}</td>
+    <td>${l.nextAction ? `<div class="na" title="${esc(l.nextAction)}">${esc(l.nextAction)}</div>` : ''}${leadDateBadge(l)}</td>
+    <td>${result(l)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 리드가 없습니다.</div>';
+  const fails = Object.entries(lost.reduce((a, l) => (a[l.failReason || '사유 미입력'] = (a[l.failReason || '사유 미입력'] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1]);
+  const mx = Math.max(1, ...fails.map(f => f[1]));
+  $('#leadStats').innerHTML = `<div class="card"><h2>수임 실패 사유 <span class="note">위 연도·유형·지역·검색 조건 적용 · 실패 ${lost.length}건</span></h2>${fails.length ? fails.map(([k, n]) => `<div style="display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px"><span style="width:130px;flex-shrink:0">${esc(k)}</span><span style="flex:1;background:var(--card-2);border-radius:4px;height:14px"><span style="display:block;height:100%;width:${n / mx * 100}%;background:var(--cmp);border-radius:4px"></span></span><b style="width:36px;text-align:right">${n}건</b></div>`).join('') : '<div class="empty">수임 실패한 리드가 없습니다.</div>'}</div>`;
+}
+views.leads.after = () => {
+  renderLeads();
+  const bar = $('#lbar');
+  bar.querySelector('[data-lf=q]').addEventListener('input', e => { LF.q = e.target.value; renderLeads(); });
+  bar.querySelector('[data-lf=status]').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; LF.status = k; bar.querySelectorAll('[data-lf=status] button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); renderLeads(); });
+  ['year', 'type', 'region'].forEach(k => bar.querySelector(`[data-lf=${k}]`).addEventListener('change', e => { LF[k] = e.target.value; renderLeads(); }));
+  $('#leadTable').addEventListener('click', e => {
+    const h = e.target.closest('th.sort'); if (h) { const k = h.dataset.k; LF.dir = LF.sort === k ? -LF.dir : (['name', 'type', 'consumerRight', 'nextDate', 'stage'].includes(k) ? 1 : -1); LF.sort = k; renderLeads(); return; }
+    const a = e.target.closest('[data-case]'); if (a) { e.preventDefault(); e.stopPropagation(); openCase(a.dataset.case); return; }
+    const r = e.target.closest('tr.row'); if (r) openLead(r.dataset.id);
+  });
+};
+// 리드 상세 (사건 상세와 같은 창을 씀. EDIT이 비어 있어 사건용 동작과 겹치지 않음)
+let LEDIT = null;
+function openLead(id) {
+  const src = id ? leadsOf().find(l => l.id === id) : null;
+  LEDIT = src ? JSON.parse(JSON.stringify(src)) : { id: uid(), no: Math.max(0, ...leadsOf().map(l => l.no || 0)) + 1, name: '', type: '화재', stage: '사고 인지', accidentDate: '', contactDate: todayStr(), phone: '', nextAction: '', nextDate: '', estLoss: 0, rate: 0.07, region: '', consumerRight: '해당 없음', source: '', link: '', failReason: '', memo: '', caseId: '', _new: true };
+  EDIT = null; drawLead();
+  const d = $('#dlg'); if (!d.open) d.showModal();
+}
+function drawLead() {
+  const l = LEDIT, o = (list, v) => `<option value=""${v ? '' : ' selected'}>—</option>` + list.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  const linked = l.caseId && S.cases.find(c => c.id === l.caseId);
+  $('#dlg').innerHTML = `<div class="dlg-h"><h3>${l._new ? '새 영업 리드' : esc(l.name)}</h3>${l._new ? '' : leadStageBadge(l)}<button class="btn sm" data-lact="close" aria-label="닫기">✕</button></div>
+  <div class="dlg-b" id="lform">
+    <fieldset><legend>리드 정보</legend><div class="fg">
+      <label class="w2">사건명 *<input data-lf="name" value="${esc(l.name)}" placeholder="예: 대전 OO공장 화재 / 홍길동 아파트 누수" required></label>
+      <label>순번<input data-lf="no" value="${l.no ?? ''}"></label>
+      <label>진행 단계<select data-lf="stage">${LEAD_STAGES.map(s => `<option ${s === l.stage ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+      <label>사건 유형<select data-lf="type">${o(LEAD_TYPES, l.type)}</select></label>
+      <label>사고 장소<select data-lf="region">${o(LEAD_REGIONS, l.region)}</select></label>
+      <label>사고 일자<input type="date" data-lf="accidentDate" value="${l.accidentDate || ''}"></label>
+      <label>최초 접촉일<input type="date" data-lf="contactDate" value="${l.contactDate || ''}"></label>
+      <label>연락처<input data-lf="phone" value="${esc(l.phone)}"></label>
+      <label>인지 경로<select data-lf="source">${o(LEAD_SOURCES, l.source)}</select></label>
+      <label>소비자선임권<select data-lf="consumerRight">${o(LEAD_RIGHTS, l.consumerRight)}</select></label>
+      <label>실패/종결 사유<select data-lf="failReason">${o(LEAD_FAILS, l.failReason)}</select><span class="hint">수임 실패일 때 선택</span></label>
+      <div class="fl w4">기사 링크<span style="display:flex;gap:8px"><input data-lf="link" value="${esc(l.link)}" placeholder="https://…">${l.link ? `<a class="btn sm" href="${esc(l.link)}" target="_blank" rel="noopener" style="text-decoration:none;align-self:center">열기 ↗</a>` : ''}</span></div>
+    </div></fieldset>
+    <fieldset><legend>보수 예상</legend><div class="fg">
+      <label>추정 손해액<input class="num" data-lf="estLoss" value="${won(l.estLoss || 0)}"></label>
+      <label>약정 보수율 (%)<input class="num" data-lf="rate" data-pct value="${+((l.rate || 0) * 100).toFixed(3)}"></label>
+      <label>예상 보수<input value="${won(leadFee(l))}" disabled><span class="hint">추정 손해액 × 보수율 (저장하면 다시 계산)</span></label>
+    </div></fieldset>
+    <fieldset><legend>다음 액션</legend><div class="fg">
+      <label class="w3" style="grid-column:span 3">다음 액션<input data-lf="nextAction" value="${esc(l.nextAction)}" placeholder="예: 피해 주택 방문해 명함 및 제안서 전달"></label>
+      <label>다음 연락일<input type="date" data-lf="nextDate" value="${l.nextDate || ''}"><span class="hint">지나면 목록에 빨간색</span></label>
+      <label class="w4">메모<textarea data-lf="memo" rows="2">${esc(l.memo)}</textarea></label>
+    </div></fieldset>
+    ${l.notionUrl ? `<p class="muted" style="font-size:12px;margin:12px 0 0">노션에서 옮겨 온 리드입니다 · <a href="${esc(l.notionUrl)}" target="_blank" rel="noopener">노션 원본 보기 ↗</a></p>` : ''}
+  </div>
+  <div class="dlg-f">${l._new ? '' : '<button class="btn dan" data-lact="delete" type="button">리드 삭제</button>'}<span class="sp"></span>${linked ? `<button class="btn" data-lact="openCase" type="button">📁 연결된 사건 열기</button>` : '<button class="btn" data-lact="toCase" type="button" title="저장하고, 이 리드 내용으로 새 사건 수임 창을 엽니다">사건으로 등록 →</button>'}<button class="btn" data-lact="close" type="button">취소</button><button class="btn pri" data-lact="save" type="button">저장</button></div>`;
+}
+function readLead() {
+  const l = LEDIT, f = $('#lform'); if (!f) return;
+  f.querySelectorAll('[data-lf]').forEach(el => { const k = el.dataset.lf; l[k] = k === 'no' ? (num(el.value) || null) : k === 'estLoss' ? num(el.value) : k === 'rate' ? num(el.value) / 100 : el.value.trim(); });
+}
+function storeLead() { // 리드 저장 (성공하면 true)
+  const l = LEDIT; readLead();
+  if (!l.name) { alert('사건명을 입력하세요.'); return false; }
+  delete l._new; S.leads ??= [];
+  const i = S.leads.findIndex(x => x.id === l.id); if (i >= 0) S.leads[i] = l; else S.leads.push(l);
+  save(); return true;
+}
+$('#dlg').addEventListener('click', e => {
+  if (!LEDIT) return;
+  const t = e.target.closest('[data-lact]'); if (!t) return;
+  const act = t.dataset.lact;
+  if (act === 'close') { $('#dlg').close(); LEDIT = null; return; }
+  if (act === 'delete') { if (confirm(`“${LEDIT.name}” 리드를 삭제할까요? 되돌릴 수 없습니다.`)) { S.leads = leadsOf().filter(x => x.id !== LEDIT.id); save(); $('#dlg').close(); LEDIT = null; render(); } return; }
+  if (act === 'save') { if (storeLead()) { $('#dlg').close(); LEDIT = null; render(); } return; }
+  if (act === 'openCase') { const cid = LEDIT.caseId; LEDIT = null; openCase(cid); return; }
+  if (act === 'toCase') { // 리드 저장 → 새 사건 수임 창을 리드 내용으로 채워 열기 (사건을 저장해야 연결됨)
+    if (!storeLead()) return;
+    const l = LEDIT; LEDIT = null; openCase();
+    const track = l.consumerRight === '선임권 행사' ? '선임권' : '일반', r = l.rate || 0.07;
+    Object.assign(EDIT, { name: l.name, type: l.type || EDIT.type, region: l.region === '기타' ? '' : l.region || '', accidentDate: l.accidentDate || '', clientPhone: l.phone || '', track, stage: TRACKS[track][0], memo: `영업 리드에서 등록${l.source ? ` (인지 경로: ${l.source})` : ''}`, _leadId: l.id });
+    EDIT.contract.rate = r; EDIT.billings = [blankBilling(r, 1)];
+    drawCase(); toast('리드 내용을 채웠습니다 · 확인하고 [저장]을 눌러 주세요'); return;
+  }
+});
+$('#dlg').addEventListener('cancel', () => { LEDIT = null; });
+
+/* ---------- case dialog ---------- */
+let EDIT = null;
+function openCase(id) {
+  const src = id ? S.cases.find(c => c.id === id) : null;
+  const y = new Date().getFullYear();
+  EDIT = src ? JSON.parse(JSON.stringify(src)) : {
+    id: uid(), year: y, no: '', name: '', region: '', type: '화재', acceptDate: todayStr(), accidentDate: '', insurer: '', insurerContact: '', clientPhone: '', address: '',
+    track: '일반', stage: TRACKS['일반'][0], recv: { policy: false, infoPoa: false, idCopy: false }, nextAction: '', dueDate: '', todos: [], contract: { date: todayStr(), rate: 0.07, share: 1, partner: '', docs: { contract: false, poa: false, privacy: false }, memo: '' },
+    billings: [blankBilling(0.07, 1)], logs: [], memo: '', _new: true
+  };
+  drawCase();
+  const d = $('#dlg'); if (!d.open) d.showModal();
+}
+function opts(list, v) { return list.map(x => `<option ${x === v ? 'selected' : ''}>${esc(x)}</option>`).join(''); }
+function drawCase() {
+  const c = EDIT, s = sum(c);
+  c.todos = todosOf(c); if (!c.todos.length) c.todos.push({ id: uid(), text: '', due: '' }); // 빈 줄 하나는 늘 보여 줌 (저장할 때 빈 줄은 빠짐)
+  const insurers = [...new Set(S.cases.map(x => x.insurer).filter(Boolean))];
+  const regions = [...new Set(S.cases.map(x => x.region).filter(Boolean))].sort();
+  const types = [...new Set(['화재', '화재 대물', '대물', '수재', '감정', ...S.cases.map(x => x.type).filter(Boolean)])];
+  const n = v => won(v);
+  $('#dlg').innerHTML = `<div class="dlg-h"><h3>${c._new ? '새 사건 수임' : esc(c.name)}</h3>${c._new ? '' : trackBadge(c) + stageHtml(c)}<button class="btn sm" data-act="close" aria-label="닫기">✕</button></div>
+  <div class="dlg-b" id="cform">
+    <datalist id="dl-region">${regions.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
+    <datalist id="dl-type">${types.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
+    <datalist id="dl-ins">${insurers.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
+    <fieldset><legend>기본 정보</legend><div class="fg">
+      <label class="w2">계약자 / 사건명 *<input data-f="name" value="${esc(c.name)}" placeholder="예: 대전 ○○아파트 화재" required></label>
+      <label>진행 구분<select data-f="track">${opts(TRACK_NAMES, c.track)}</select></label>
+      <label>지역<input data-f="region" list="dl-region" value="${esc(c.region)}"></label>
+      <label>사고유형<input data-f="type" list="dl-type" value="${esc(c.type)}"></label>
+      <label>수임일<input type="date" data-f="acceptDate" value="${c.acceptDate}"></label>
+      <label>사고일<input type="date" data-f="accidentDate" value="${c.accidentDate || ''}"></label>
+      <label>보험사<input data-f="insurer" list="dl-ins" value="${esc(c.insurer)}"></label>
+      <label>보험사 담당자·연락처<input data-f="insurerContact" value="${esc(c.insurerContact)}"></label>
+      <label>계약자 연락처<input data-f="clientPhone" value="${esc(c.clientPhone)}"></label>
+      <label class="w2">사고 장소 / 주소<input data-f="address" value="${esc(c.address)}"></label>
+      <label>순번(엑셀)<input data-f="no" value="${esc(c.no)}"></label>
+    </div></fieldset>
+    <fieldset><legend>수임계약</legend><div class="fg">
+      <label>계약일<input type="date" data-c="date" value="${c.contract.date || ''}"></label>
+      <label>계약 요율 (%)<input class="num" data-c="rate" data-pct value="${+(c.contract.rate * 100).toFixed(3)}"></label>
+      <label>지분 (%)<input class="num" data-c="share" data-pct value="${+((c.contract.share ?? 1) * 100).toFixed(1)}"><span class="hint">공동수임 시 우리 지분</span></label>
+      <label>공동수임 상대<input data-c="partner" value="${esc(c.contract.partner)}"></label>
+      <label class="w4">계약 메모<input data-c="memo" value="${esc(c.contract.memo)}" placeholder="특약, 착수금, 선임권 여부 등"></label>
+      <div class="fl w4">계약서 스캔 파일<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${c.contract.file
+        ? `<span style="color:var(--ink)">📄 ${esc(c.contract.file)}</span><button class="btn sm" type="button" data-openfile="${esc(c.contract.file)}">열기</button><button class="btn sm" type="button" data-act="attachFile">다른 파일로 바꾸기</button><button class="btn sm dan" type="button" data-act="unlinkFile">연결 해제</button>`
+        : `<button class="btn sm pri" type="button" data-act="attachFile">계약서 첨부</button><span class="muted" style="font-size:12px">PDF·JPG를 고르면 OneDrive “계약서” 폴더에 복사해 둡니다</span>`}</span></div>
+    </div></fieldset>
+    <fieldset><legend>진행 관리</legend><div class="fg">
+      <label>진행 단계 (${esc(c.track)})<select data-f="stage">${stageIdx(c) < 0 ? '<option value="" selected>— 단계를 선택하세요 —</option>' : ''}${stagesOf(c).map((s, i) => `<option value="${esc(s)}" ${s === c.stage ? 'selected' : ''}>${i + 1}. ${esc(s)}</option>`).join('')}</select></label>
+      <label>예상 종결년월<input type="month" data-f="expectedClose" value="${c.expectedClose || ''}"><span class="hint">대시보드 월별 예상 수금에 쓰입니다</span></label>
+      <div class="fl w4">다음 할 일 <span class="muted" style="font-size:12px;font-weight:400">날짜별로 여러 개 적을 수 있습니다 · 하루짜리는 오른쪽 날짜(마감일)만, 기간이면 왼쪽 시작일도 입력 · 완료를 체크하면 진행일지에 기록되고 목록에서 빠집니다</span>
+        <span class="todos">${c.todos.map((t, i) => `<span class="todo-row" data-ti="${i}"><input data-tf="text" value="${esc(t.text)}" placeholder="예: 보험사에 손해사정서 제출"><input type="date" data-tf="start" value="${t.start || ''}" title="시작일 (기간일 때만 입력, 하루짜리는 비워 두세요)"><span class="muted">~</span><input type="date" data-tf="due" value="${t.due || ''}" title="마감일 (하루짜리는 그날)"><label class="nowrap" title="체크하면 진행일지에 완료 기록이 추가되고 목록에서 빠집니다"><input type="checkbox" data-act="doneTodo" data-tid="${t.id}"> 완료</label><button class="x" type="button" data-act="delTodo" data-ti="${i}" aria-label="삭제" title="삭제 (진행일지에 남기지 않음)">✕</button></span>`).join('')}</span>
+        <span><button class="btn sm" type="button" data-act="addTodo">+ 할 일 추가</button></span>
+      </div>
+      <div class="fl w4">접수 서류<span class="chk">${RECV.map(([k, l]) => `<label><input type="checkbox" data-recv="${k}" ${c.recv?.[k] ? 'checked' : ''}> ${l}</label>`).join('')}${recvMissing(c) ? '<span class="badge crit">미접수 ' + RECV.filter(([k]) => !c.recv?.[k]).length + '건</span>' : '<span class="badge good">✓ 모두 접수</span>'}</span></div>
+      <div class="fl w4">진행일지
+        <span style="display:flex;gap:6px"><input type="date" id="logDate" value="${todayStr()}" style="width:150px"><input id="logText" placeholder="진행 내용을 입력하고 Enter (예: 현장조사 실시, 보험사 미팅)"><button class="btn" data-act="addlog" type="button">추가</button></span>
+        <span class="logs">${c.logs.map((l, i) => `<span class="log"><span class="d">${fmtDate(l.date)}</span><span>${esc(l.text)}</span><button class="x" data-dellog="${i}" type="button" aria-label="삭제">✕</button></span>`).join('') || '<span class="muted" style="font-size:12.5px">기록이 없습니다.</span>'}</span>
+      </div>
+      <label class="w4">사건 메모<textarea data-f="memo" rows="2">${esc(c.memo)}</textarea></label>
+    </div></fieldset>
+    <fieldset><legend>청구 · 입금 <span class="muted" style="font-weight:400;font-size:12.5px">수수료 ${n(s.fee)} · 청구액 ${n(s.total)} · 미입금 ${n(s.unpaidTotal)} · 순이익 ${n(s.net)}</span><span style="flex:1"></span><button class="btn sm" data-act="addbill" type="button">+ 분할 청구 추가</button></legend>
+    ${c.billings.map((b, i) => `<div class="bill" data-bi="${i}"><div class="bill-h">청구 ${i + 1} ${feeKind(b)} ${b.paidDate ? '<span class="badge good">✓ 입금 ' + fmtDate(b.paidDate) + '</span>' : ''}<label class="chk" style="font-weight:400;margin-left:6px"><input type="checkbox" data-b="confirmed" ${isConfirmed(b) ? 'checked' : ''}> 확정 수수료</label><span class="sp"></span><button class="btn sm" data-act="calc" type="button" title="보험금 × 요율 × 지분, 부가세 10%">수수료 자동계산</button>${c.billings.length > 1 ? `<button class="btn sm dan" data-delbill="${i}" type="button">삭제</button>` : ''}</div>
+      <div class="fg">
+        <label>지급보험금<input class="num" data-b="claim" value="${n(b.claim)}"></label>
+        <label>요율 (%)<input class="num" data-b="rate" data-pct value="${+(b.rate * 100).toFixed(3)}"></label>
+        <label>지분 (%)<input class="num" data-b="share" data-pct value="${+(b.share * 100).toFixed(1)}"></label>
+        <label>${isConfirmed(b) ? '확정 수수료' : '예상 수수료'}<input class="num" data-b="fee" value="${n(b.fee)}">${b.estFee != null && b.estFee !== b.fee ? `<span class="hint">예상 ${n(b.estFee)}원</span>` : ''}</label>
+        <label>부가세<input class="num" data-b="vat" value="${n(b.vat)}"></label>
+        <label>기타 청구 (실비 등)<input class="num" data-b="extra" value="${n(b.extra || 0)}"></label>
+        <label>경비<input class="num" data-b="expense" value="${n(b.expense)}"></label>
+        <label>지출부가세 (배분)<input class="num" data-b="expVat" value="${n(b.expVat)}"></label>
+        <label>소득세 (배분)<input class="num" data-b="incomeTax" value="${n(b.incomeTax)}"></label>
+        <label>청구일<input type="date" data-b="billDate" value="${b.billDate || ''}"></label>
+        <label>입금일<input type="date" data-b="paidDate" value="${b.paidDate || ''}"><span class="hint">입력하면 입금 완료</span></label>
+        <label class="w2">메모<input data-b="memo" value="${esc(b.memo)}"></label>
+      </div></div>`).join('')}
+    </fieldset>
+  </div>
+  <div class="dlg-f">${c._new ? '' : '<button class="btn dan" data-act="delete" type="button">사건 삭제</button>'}<span class="sp"></span><button class="btn" data-act="close" type="button">취소</button><button class="btn pri" data-act="save" type="button">저장</button></div>`;
+}
+function readForm() {
+  const c = EDIT, f = $('#cform'); if (!f) return;
+  f.querySelectorAll('[data-f]').forEach(el => c[el.dataset.f] = el.value.trim ? el.value.trim() : el.value);
+  f.querySelectorAll('.todo-row').forEach(el => { const t = c.todos[+el.dataset.ti]; if (t) { t.text = el.querySelector('[data-tf=text]').value.trim(); t.start = el.querySelector('[data-tf=start]').value; t.due = el.querySelector('[data-tf=due]').value; } });
+  f.querySelectorAll('[data-c]').forEach(el => { const k = el.dataset.c; c.contract[k] = el.hasAttribute('data-pct') ? num(el.value) / 100 : el.value; });
+  f.querySelectorAll('.bill').forEach(el => { const b = c.billings[+el.dataset.bi]; el.querySelectorAll('[data-b]').forEach(i => { const k = i.dataset.b; b[k] = k === 'confirmed' ? i.checked : ['billDate', 'paidDate', 'memo'].includes(k) ? i.value : i.hasAttribute('data-pct') ? num(i.value) / 100 : num(i.value); }); });
+}
+$('#dlg').addEventListener('change', e => {
+  if (e.target.dataset.b === 'confirmed') { const b = EDIT.billings[+e.target.closest('.bill').dataset.bi]; if (e.target.checked && b.estFee == null) { b.estFee = b.fee; b.estVat = b.vat; } readForm(); drawKeep(); }
+  if (e.target.dataset.recv) { EDIT.recv ??= {}; EDIT.recv[e.target.dataset.recv] = e.target.checked; readForm(); drawKeep(); }
+  if (e.target.dataset.f === 'track') { // 진행 구분 변경 → 같은 이름의 단계, 없으면 비슷한 진행률의 단계로
+    const oldList = stagesOf(EDIT); // readForm 전이라 EDIT.track은 아직 이전 값
+    const oldIdx = Math.max(0, oldList.indexOf(EDIT.stage));
+    readForm(); const list = stagesOf(EDIT);
+    if (!list.includes(EDIT.stage)) EDIT.stage = list[Math.round(oldIdx / (oldList.length - 1) * (list.length - 1))];
+    drawKeep();
+  }
+  if (e.target.dataset.c === 'rate' || e.target.dataset.c === 'share') { // 계약 조건 → 미청구 건 기본값
+    readForm(); for (const b of EDIT.billings) if (!b.fee && !b.paidDate) { b.rate = EDIT.contract.rate; b.share = EDIT.contract.share; } drawKeep();
+  }
+});
+$('#dlg').addEventListener('input', e => {
+  const el = e.target; if (!el.classList.contains('num') || el.hasAttribute('data-pct')) return;
+  const pos = el.value.length - el.selectionStart; const v = num(el.value); el.value = el.value.trim() === '' || el.value === '-' ? el.value : won(v);
+  const p = Math.max(0, el.value.length - pos); el.setSelectionRange(p, p);
+});
+function drawKeep() { const sc = $('#cform')?.scrollTop; drawCase(); if (sc != null) $('#cform').scrollTop = sc; }
+$('#dlg').addEventListener('keydown', e => { if (e.target.id === 'logText' && e.key === 'Enter') { e.preventDefault(); $('[data-act=addlog]').click(); } });
+$('#dlg').addEventListener('click', e => {
+  if (!EDIT) return;
+  const t = e.target.closest('[data-act],[data-delbill],[data-dellog]'); if (!t) return;
+  const act = t.dataset.act;
+  if (act === 'close') { $('#dlg').close(); EDIT = null; return; }
+  readForm();
+  if (act === 'attachFile') { // 첨부는 파일을 폴더에 바로 복사하므로, 기존 사건이면 연결 정보도 바로 저장
+    const id = EDIT.id;
+    attachContract(EDIT).then(name => {
+      if (!name) return;
+      const sc = S.cases.find(x => x.id === id); if (sc) { sc.contract.file = name; save(true); }
+      if (EDIT && EDIT.id === id) { EDIT.contract.file = name; drawKeep(); }
+      toast('계약서를 첨부했습니다');
+    }).catch(err => alert('첨부하지 못했습니다: ' + err.message));
+    return;
+  }
+  if (act === 'unlinkFile') {
+    if (!confirm('계약서 파일 연결을 해제할까요?\n(파일은 OneDrive 계약서 폴더에 그대로 남습니다)')) return;
+    EDIT.contract.file = ''; const sc = S.cases.find(x => x.id === EDIT.id); if (sc) { sc.contract.file = ''; save(true); }
+    drawKeep(); return;
+  }
+  if (act === 'doneTodo') { // 다음 할 일 완료 → 진행일지에 기록하고 목록에서 뺌
+    if (!completeTodo(EDIT, t.dataset.tid)) { t.checked = false; alert('완료할 “다음 할 일”을 먼저 입력하세요.'); return; }
+    drawKeep(); toast('진행일지에 완료 기록을 추가했습니다 · [저장]을 눌러 반영하세요'); return;
+  }
+  if (act === 'addTodo') { EDIT.todos.push({ id: uid(), text: '', due: '' }); drawKeep(); [...$('#cform').querySelectorAll('[data-tf=text]')].pop()?.focus(); return; }
+  if (act === 'delTodo') { const x = EDIT.todos[+t.dataset.ti]; if (x && (x.text || x.due || x.start) && !confirm(`“${x.text || '(내용 없음)'}” 할 일을 지울까요?\n진행일지에는 남기지 않습니다.`)) return; EDIT.todos.splice(+t.dataset.ti, 1); drawKeep(); return; }
+  if (act === 'addlog') { const tx = $('#logText').value.trim(); if (!tx) return; EDIT.logs.unshift({ date: $('#logDate').value || todayStr(), text: tx }); EDIT.logs.sort((a, b) => a.date < b.date ? 1 : -1); drawKeep(); $('#logText').focus(); return; }
+  if (t.dataset.dellog != null) { EDIT.logs.splice(+t.dataset.dellog, 1); drawKeep(); return; }
+  if (act === 'addbill') { EDIT.billings.push(blankBilling(EDIT.contract.rate, EDIT.contract.share)); drawKeep(); return; }
+  if (t.dataset.delbill != null) { if (confirm('이 청구 내역을 삭제할까요?')) { EDIT.billings.splice(+t.dataset.delbill, 1); drawKeep(); } return; }
+  if (act === 'calc') { const b = EDIT.billings[+t.closest('.bill').dataset.bi]; b.fee = Math.round(b.claim * b.rate * b.share); b.vat = Math.round(b.fee * 0.1); drawKeep(); return; }
+  if (act === 'delete') { if (confirm(`“${EDIT.name}” 사건을 삭제할까요? 되돌릴 수 없습니다.`)) { S.cases = S.cases.filter(c => c.id !== EDIT.id); save(); $('#dlg').close(); EDIT = null; render(); } return; }
+  if (act === 'save') {
+    if (!EDIT.name) { alert('계약자 / 사건명을 입력하세요.'); return; }
+    const c = EDIT; delete c._new; syncTodos(c);
+    if (c._leadId) { const l = leadsOf().find(x => x.id === c._leadId); if (l) { l.caseId = c.id; l.stage = '수임 성공'; } delete c._leadId; } // 영업 리드에서 등록한 사건
+    if (c.acceptDate) c.year = +c.acceptDate.slice(0, 4);
+    const s = sum(c);
+    if (c.stage === DONE && c.billings.some(b => billTotal(b) && !isConfirmed(b))) {
+      if (!confirm('아직 “예상 수수료”인 청구가 있습니다.\n확정 수수료를 입력하셨으면 [확인]을 눌러 현재 금액을 확정 수수료로 저장합니다.\n[취소]를 누르면 저장하지 않고 돌아갑니다.')) return;
+      for (const b of c.billings) if (!isConfirmed(b)) { b.estFee ??= b.fee; b.estVat ??= b.vat; b.confirmed = true; }
+    }
+    if (s.allPaid && isOpen(c) && confirm(`모든 청구가 입금되었습니다. 단계를 “${DONE}”로 바꿀까요?`)) c.stage = DONE;
+    const i = S.cases.findIndex(x => x.id === c.id);
+    if (i >= 0) S.cases[i] = c; else { if (!c.no) c.no = String(S.cases.filter(x => caseYear(x) === caseYear(c)).length + 1); S.cases.push(c); c.logs.push({ date: c.acceptDate || todayStr(), text: '사건 수임' }); }
+    save(); $('#dlg').close(); EDIT = null; render();
+  }
+});
+$('#dlg').addEventListener('cancel', () => { EDIT = null; });
+
+/* ---------- import / export ---------- */
+function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+function exportJSON() { S.meta.lastBackup = todayStr(); save(true); download(`번영손해사정_백업_${todayStr()}.json`, JSON.stringify(S, null, 1), 'application/json'); toast('백업 파일을 저장했습니다'); render(); }
+function exportCSV() {
+  const H = ['연도', '순번', '계약자/사건명', '지역', '사고유형', '수임일', '사고일', '보험사', '진행구분', '진행단계', '보험증권', '정보공개위임장', '신분증사본', '다음할일', '기한', '예상종결', '청구#', '지급보험금', '요율', '지분', '수수료구분', '수수료', '부가세', '기타청구', '합계', '지출부가세', '소득세', '경비', '순이익', '청구일', '입금일', '공동수임', '메모'];
+  const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const lines = [H.join(',')];
+  for (const c of [...S.cases].sort((a, b) => (a.acceptDate || '') < (b.acceptDate || '') ? -1 : 1)) c.billings.forEach((b, i) => lines.push([caseYear(c), c.no, c.name, c.region, c.type, c.acceptDate, c.accidentDate, c.insurer, c.track, c.stage, ...RECV.map(([k]) => c.recv?.[k] ? 'O' : 'X'), sortTodos(todosOf(c)).map(t => t.text).join(' / '), sortTodos(todosOf(c)).map(t => t.start ? `${t.start}~${t.due}` : t.due).join(' / '), c.expectedClose || '', i + 1, b.claim, b.rate, b.share, isConfirmed(b) ? '확정' : '예상', b.fee, b.vat, b.extra || 0, billTotal(b), b.expVat, b.incomeTax, b.expense, billTotal(b) - b.expVat - b.incomeTax - b.expense, b.billDate, b.paidDate, c.contract.partner, c.memo].map(q).join(',')));
+  download(`번영손해사정_사건목록_${todayStr()}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+}
+$('#fileIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.cases) || !Array.isArray(d.tax)) throw new Error('번영손해사정 백업 파일 형식이 아닙니다.');
+    if (!confirm(`백업 파일 (${d.cases.length}건)로 현재 데이터를 교체할까요?`)) return;
+    S = d; S.meta ??= {}; save(); render();
+  } catch (err) { alert('불러오기 실패: ' + err.message); }
+});
+function resetAll() { if (WEB) return alert('인터넷 버전에서는 초기화를 쓸 수 없습니다. PC에서 해 주세요.'); if (confirm('정말로 모든 변경 내용을 지우고 엑셀 원본 상태로 되돌릴까요?') && confirm('한 번 더 확인합니다. 되돌릴 수 없습니다.')) { S = fromSeed(); save(); render(); } }
+
+/* ---------- OneDrive 데이터 파일 동기화 ----------
+   데이터 파일(JSON) 하나를 OneDrive 폴더에 두고 노트북·사무실 PC가 같은 파일을 읽고 씀 (엣지·크롬의 파일 접근 기능).
+   충돌 방지: 파일 안의 meta.rev(저장 번호)를 비교해서, 다른 PC가 더 최신으로 저장했으면 덮어쓰지 않고 사용자에게 묻는다. */
+const PC_KEY = 'byeongyoung_pc_name';
+const FILE_TYPES = [{ description: '번영손해사정 데이터 (JSON)', accept: { 'application/json': ['.json'] } }];
+const SYNC = { handle: null, state: 'off', baseRev: 0, remote: null, error: '', lastCheck: '', queue: Promise.resolve() }; // state: off | need | ok | conflict | error
+const fsSupported = () => 'showSaveFilePicker' in window && 'showOpenFilePicker' in window;
+function pcName() { try { return localStorage.getItem(PC_KEY) || ''; } catch { return ''; } }
+function setPcName(v) { try { localStorage.setItem(PC_KEY, v.trim()); } catch {} renderSyncUI(); }
+function idbReq(mode, fn) {
+  return new Promise((res, rej) => {
+    const o = indexedDB.open('byeongyoung_sync', 1);
+    o.onupgradeneeded = () => o.result.createObjectStore('kv');
+    o.onerror = () => rej(o.error);
+    o.onsuccess = () => { const tx = o.result.transaction('kv', mode), r = fn(tx.objectStore('kv')); tx.oncomplete = () => res(r.result); tx.onerror = () => rej(tx.error); };
+  });
+}
+const idbGet = k => idbReq('readonly', s => s.get(k));
+const idbSet = (k, v) => idbReq('readwrite', s => s.put(v, k));
+const idbDel = k => idbReq('readwrite', s => s.delete(k));
+const revOf = d => d?.meta?.rev || 0;
+function fmtIso(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const syncTask = fn => (SYNC.queue = SYNC.queue.then(fn).catch(syncError)); // 파일 읽기·쓰기는 한 번에 하나씩
+function syncError(e) { console.error(e); SYNC.state = 'error'; SYNC.error = e?.message || String(e); renderSyncUI(); }
+
+async function readFileData() {
+  const txt = await (await SYNC.handle.getFile()).text();
+  if (!txt.trim()) return null;
+  const d = JSON.parse(txt);
+  if (!Array.isArray(d.cases) || !Array.isArray(d.tax)) throw new Error('번영손해사정 데이터 파일 형식이 아닙니다.');
+  return d;
+}
+async function writeFileData() {
+  S.meta.rev = SYNC.baseRev + 1; S.meta.savedBy = pcName() || '이름 없는 PC'; S.meta.savedAtIso = new Date().toISOString(); S.meta.dirty = false;
+  const w = await SYNC.handle.createWritable(); await w.write(JSON.stringify(S)); await w.close();
+  SYNC.baseRev = S.meta.rev; SYNC.lastCheck = nowHM(); persistLocal(); renderSyncUI();
+}
+function applyRemote(d) {
+  S = d; S.meta ??= {}; migrate(); SYNC.baseRev = revOf(S); S.meta.dirty = false; persistLocal(); updateCounts();
+  if (!$('#dlg').open) render();
+}
+function enterConflict(remote) { SYNC.state = 'conflict'; SYNC.remote = remote; renderSyncUI(); }
+async function pushToFile() { // 저장할 때: 파일이 그사이 다른 PC에서 바뀌었으면 덮어쓰지 않음
+  if (SYNC.state !== 'ok') return;
+  const remote = await readFileData();
+  if (revOf(remote) > SYNC.baseRev) return enterConflict(remote);
+  await writeFileData();
+}
+async function pullFromFile() { // 주기적으로·창으로 돌아올 때: 다른 PC가 저장한 최신 데이터 가져오기
+  if (SYNC.state !== 'ok' || $('#dlg').open) return;
+  const remote = await readFileData(); SYNC.lastCheck = nowHM();
+  if (revOf(remote) > SYNC.baseRev) {
+    if (S.meta.dirty) return enterConflict(remote);
+    applyRemote(remote); toast(`${remote.meta?.savedBy || '다른 PC'}에서 저장한 최신 데이터를 불러왔습니다`);
+  } else if (S.meta.dirty) await writeFileData();
+  renderSyncUI();
+}
+function checkReady() {
+  if (!fsSupported()) { alert('이 브라우저에서는 데이터 파일 동기화를 쓸 수 없습니다. 엣지(Edge)나 크롬에서 열어 주세요.'); return false; }
+  if (!pcName()) { alert('먼저 “이 PC 이름”을 입력해 주세요. (예: 노트북, 사무실)'); $('#pcName')?.focus(); return false; }
+  return true;
+}
+async function syncCreateFile() { // 처음 한 번: 이 PC의 데이터로 OneDrive에 데이터 파일 만들기
+  if (!checkReady()) return;
+  let h; try { h = await showSaveFilePicker({ suggestedName: '번영손해사정_데이터.json', types: FILE_TYPES }); } catch { return; }
+  SYNC.handle = h;
+  let remote = null; try { remote = await readFileData(); } catch {}
+  if (remote && !confirm(`선택한 파일에 이미 데이터가 있습니다 (사건 ${remote.cases.length}건 · ${remote.meta?.savedBy || ''} ${fmtIso(remote.meta?.savedAtIso)} 저장).\n\n이 PC의 데이터로 덮어쓸까요?\n다른 PC의 데이터를 가져오려면 [취소]를 누르고 “기존 데이터 파일 열기”를 사용하세요.`)) { SYNC.handle = null; return; }
+  SYNC.baseRev = revOf(remote); SYNC.state = 'ok'; await idbSet('handle', h);
+  await syncTask(writeFileData);
+  if (SYNC.state === 'ok') toast('데이터 파일을 만들고 저장했습니다');
+  render();
+}
+async function syncOpenFile() { // 다른 PC에서: 이미 만든 데이터 파일 연결하기
+  if (!checkReady()) return;
+  let h; try { [h] = await showOpenFilePicker({ types: FILE_TYPES, multiple: false }); } catch { return; }
+  try { if (await h.requestPermission({ mode: 'readwrite' }) !== 'granted') return alert('파일에 저장하려면 “편집 허용”이 필요합니다.'); } catch (e) { return alert(e.message); }
+  SYNC.handle = h; let remote;
+  try { remote = await readFileData(); } catch (e) { SYNC.handle = null; return alert('불러오기 실패: ' + e.message); }
+  if (!remote) { SYNC.handle = null; return alert('빈 파일입니다. 데이터가 있는 PC에서 “새 데이터 파일 만들기”를 먼저 해 주세요.'); }
+  if (!confirm(`데이터 파일을 불러와 이 PC의 데이터를 교체합니다.\n(사건 ${remote.cases.length}건 · ${remote.meta?.savedBy || ''} ${fmtIso(remote.meta?.savedAtIso)} 저장)\n\n계속할까요?`)) { SYNC.handle = null; return; }
+  SYNC.state = 'ok'; await idbSet('handle', h);
+  applyRemote(remote); toast('데이터 파일에 연결했습니다'); renderSyncUI();
+}
+async function syncReconnect() { // 프로그램을 다시 열었을 때 브라우저가 파일 권한을 다시 물으면
+  if (!SYNC.handle) return;
+  try { if (await SYNC.handle.requestPermission({ mode: 'readwrite' }) !== 'granted') return; } catch (e) { return syncError(e); }
+  SYNC.state = 'ok'; renderSyncUI(); syncTask(pullFromFile);
+}
+function syncRetry() { SYNC.state = 'ok'; SYNC.error = ''; renderSyncUI(); syncTask(pullFromFile); }
+function syncCheckNow() { if (SYNC.state === 'ok') syncTask(pullFromFile).then(() => SYNC.state === 'ok' && toast('최신 상태입니다')); }
+async function syncDisconnect() {
+  if (!confirm('데이터 파일 연결을 끊을까요?\n파일은 OneDrive에 그대로 남고, 이 PC는 다시 브라우저에만 저장합니다.')) return;
+  try { await idbDel('handle'); } catch {}
+  SYNC.handle = null; SYNC.state = 'off'; S.meta.dirty = false; persistLocal(); renderSyncUI(); render();
+}
+function resolveConflict(useFile) {
+  const remote = SYNC.remote; SYNC.remote = null; SYNC.state = 'ok';
+  if (useFile) { applyRemote(remote); toast('파일의 최신 데이터를 불러왔습니다'); }
+  else { SYNC.baseRev = revOf(remote); syncTask(writeFileData).then(() => SYNC.state === 'ok' && toast('이 PC의 데이터로 파일을 덮어썼습니다')); }
+  renderSyncUI();
+}
+function renderSyncUI() {
+  const side = $('#syncState'), bar = $('#syncBar'); if (!side) return;
+  const st = SYNC.state, fname = esc(SYNC.handle?.name || '');
+  side.innerHTML = st === 'ok' ? `<span class="up">●</span> OneDrive 동기화 중<br>${fname}`
+    : st === 'need' ? `<a href="#" class="down" onclick="syncReconnect();return false">⚠ 데이터 파일 다시 연결</a>`
+    : st === 'conflict' ? '<span class="down">⚠ 동기화 충돌</span>'
+    : st === 'error' ? '<span class="down">⚠ 동기화 오류</span>'
+    : '● 이 PC 브라우저에만 저장 중';
+  const r = SYNC.remote;
+  bar.innerHTML = st === 'need' ? `<div class="banner">⚠ <span>OneDrive 데이터 파일(<b>${fname}</b>)에 다시 연결해야 최신 데이터로 작업할 수 있습니다. 버튼을 누른 뒤 “편집 허용”을 선택하세요.</span><span class="sp"></span><button class="btn sm pri" onclick="syncReconnect()">다시 연결</button></div>`
+    : st === 'conflict' ? `<div class="banner crit">⚠ <span><b>${esc(r?.meta?.savedBy || '다른 PC')}</b>에서 ${fmtIso(r?.meta?.savedAtIso)}에 더 최신 데이터를 저장했는데, 이 PC에도 파일에 아직 저장하지 못한 변경이 있습니다. 어느 쪽을 남길지 선택하세요.</span><span class="sp"></span><button class="btn sm pri" onclick="resolveConflict(true)">파일의 최신 데이터 사용 (이 PC 변경 버림)</button><button class="btn sm dan" onclick="if(confirm('다른 PC에서 저장한 내용이 사라집니다. 계속할까요?'))resolveConflict(false)">이 PC 데이터로 덮어쓰기</button></div>`
+    : st === 'error' ? `<div class="banner crit">⚠ <span>데이터 파일을 읽거나 저장하지 못했습니다: ${esc(SYNC.error)}<br>OneDrive가 실행 중인지, 파일 이름·위치가 바뀌지 않았는지 확인하세요. (변경 내용은 이 PC에 임시 보관 중)</span><span class="sp"></span>${WEB && !msTok() ? '<button class="btn sm pri" onclick="msLogin()">다시 로그인</button>' : ''}<button class="btn sm" onclick="syncRetry()">다시 시도</button></div>`
+    : '';
+}
+async function initSync() {
+  if (WEB) return webInit();
+  renderSyncUI();
+  if (!fsSupported()) return;
+  let h; try { h = await idbGet('handle'); } catch {}
+  if (!h) return;
+  SYNC.handle = h; SYNC.baseRev = revOf(S);
+  let p = 'prompt'; try { p = await h.queryPermission({ mode: 'readwrite' }); } catch {}
+  SYNC.state = p === 'granted' ? 'ok' : 'need';
+  renderSyncUI();
+  if (SYNC.state === 'ok') syncTask(pullFromFile);
+}
+// 30초마다, 그리고 이 창으로 돌아올 때 다른 PC의 저장 여부 확인
+setInterval(() => { if (document.visibilityState === 'visible' && SYNC.state === 'ok') syncTask(pullFromFile); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && SYNC.state === 'ok') syncTask(pullFromFile); });
+
+/* ---------- 계약서 스캔 파일 ----------
+   OneDrive\번영손해사정\계약서 폴더를 PC마다 한 번 연결해 두고, 첨부할 때 그 폴더로 복사·열 때 그 폴더에서 읽는다.
+   데이터에는 파일 이름만 저장(c.contract.file). */
+const DIR = { handle: null, state: 'off' }; // state: off | need | ok
+const SCAN_TYPES = [{ description: '계약서 스캔 (PDF·이미지)', accept: { 'application/pdf': ['.pdf'], 'image/*': ['.jpg', '.jpeg', '.png', '.tif', '.tiff'] } }];
+async function initContractDir() {
+  if (WEB || !('showDirectoryPicker' in window)) return; // 인터넷 버전은 webInit에서 OneDrive 계약서 폴더로 연결
+  let h; try { h = await idbGet('contractDir'); } catch {}
+  if (!h) return;
+  DIR.handle = h;
+  let p = 'prompt'; try { p = await h.queryPermission({ mode: 'readwrite' }); } catch {}
+  DIR.state = p === 'granted' ? 'ok' : 'need';
+}
+// 엣지는 버튼을 누른 "직후"에 한 번만 폴더·파일 선택 창이나 권한 창을 열어 준다.
+// 그래서 폴더 연결(또는 권한 다시 허용)이 필요하면 그것만 하고, 첨부·열기는 버튼을 한 번 더 눌러서 진행한다.
+async function prepareContractDir() { // 준비돼 있으면 true, 연결·허용 단계를 진행했으면 false
+  if (DIR.state === 'ok') return true;
+  if (!('showDirectoryPicker' in window)) { alert('이 브라우저에서는 계약서 폴더를 쓸 수 없습니다. 엣지(Edge)로 열어 주세요.'); return false; }
+  if (DIR.handle) {
+    try { if (await DIR.handle.requestPermission({ mode: 'readwrite' }) === 'granted') { DIR.state = 'ok'; toast('계약서 폴더를 허용했습니다. 버튼을 한 번 더 눌러 주세요'); if (location.hash === '#settings') render(); } } catch {}
+    return false;
+  }
+  if (await connectContractDir()) toast('계약서 폴더를 연결했습니다. 버튼을 한 번 더 눌러 주세요');
+  return false;
+}
+async function connectContractDir() {
+  toast('“계약서” 폴더를 선택하고 “파일 보기·편집 허용”을 눌러 주세요');
+  // 데이터 파일이 연결돼 있으면 그 폴더(OneDrive\번영손해사정)에서 선택 창이 열림
+  let h; try { h = await showDirectoryPicker({ mode: 'readwrite', ...(SYNC.handle ? { startIn: SYNC.handle } : {}) }); } catch { return false; }
+  if (h.name !== '계약서' && !confirm(`선택한 폴더 이름이 “${h.name}”입니다. 이 폴더를 계약서 폴더로 쓸까요?`)) return false;
+  DIR.handle = h; DIR.state = 'ok'; try { await idbSet('contractDir', h); } catch {}
+  if (location.hash === '#settings') { render(); toast('계약서 폴더를 연결했습니다'); }
+  return true;
+}
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+async function attachContract(c) { // 스캔 파일을 골라 계약서 폴더로 복사하고 파일 이름을 사건에 기록
+  if (!await prepareContractDir()) return null;
+  let file;
+  if (WEB || !('showOpenFilePicker' in window)) { file = await pickLocalFile(); if (!file) return null; } // 태블릿·휴대폰: 일반 파일 선택 (사진 촬영 포함)
+  else { let src; try { [src] = await showOpenFilePicker({ types: SCAN_TYPES, multiple: false }); } catch { return null; } file = await src.getFile(); }
+  const ext = (file.name.match(/\.[^.]+$/) || ['.pdf'])[0].toLowerCase();
+  const base = `${c.contract.date || c.acceptDate || todayStr()}_${safeName(c.name) || '사건'}_계약서`;
+  let name = base + ext, n = 2;
+  while (true) { try { await DIR.handle.getFileHandle(name); name = `${base}(${n++})${ext}`; } catch { break; } } // 같은 이름이 있으면 (2), (3)…
+  const w = await (await DIR.handle.getFileHandle(name, { create: true })).createWritable(); await w.write(file); await w.close();
+  return name;
+}
+async function openContractFile(name) {
+  if (!name) return;
+  if (DIR.state !== 'ok') { await prepareContractDir(); return; }
+  const win = window.open('', '_blank'); // 클릭 직후 창부터 열어 둠 (팝업 차단 방지)
+  try {
+    const f = await (await DIR.handle.getFileHandle(name)).getFile();
+    const url = URL.createObjectURL(f);
+    if (win) win.location.href = url; else window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    win?.close();
+    alert(`계약서 파일을 열 수 없습니다: ${name}\n\n계약서 폴더에 파일이 있는지, OneDrive 동기화가 끝났는지 확인해 주세요.`);
+  }
+}
+function contractFileCell(c) {
+  const f = c.contract?.file;
+  return f ? `<button class="btn sm file-ok" data-openfile="${esc(f)}" title="${esc(f)}">📄 열기</button>` : isOpen(c) ? '<span class="badge crit">미첨부</span>' : '<span class="muted">-</span>';
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-openfile]'); if (b) { e.preventDefault(); e.stopPropagation(); openContractFile(b.dataset.openfile); } }, true);
+
+/* ---------- 인터넷 주소 버전 (태블릿·휴대폰) ----------
+   https 주소로 열면 마이크로소프트 계정으로 로그인해서, OneDrive의 같은 데이터 파일(번영손해사정\번영손해사정_데이터.json)과
+   계약서 폴더를 인터넷으로 읽고 쓴다. 파일 읽기·쓰기만 바꿔 끼우므로 저장 번호 비교·충돌 안내 등은 PC와 똑같이 동작한다.
+   PC에서 파일을 직접 열 때(file://)는 이 부분을 쓰지 않는다. */
+const WEB = location.protocol === 'https:';
+const MS = {
+  clientId: '', // 마이크로소프트에 등록한 프로그램 번호(애플리케이션 ID). 등록 후 채움
+  authority: 'https://login.microsoftonline.com/consumers/oauth2/v2.0', // 개인 마이크로소프트 계정
+  scope: 'Files.ReadWrite offline_access openid profile',
+  folder: '번영손해사정', dataFile: '번영손해사정_데이터.json', contractFolder: '계약서'
+};
+const MS_KEY = 'byeongyoung_ms';
+const WEBST = { ready: false, loading: false, error: '' };
+const msTok = () => { try { return JSON.parse(localStorage.getItem(MS_KEY) || 'null'); } catch { return null; } };
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const msRedirect = () => location.origin + location.pathname;
+const deviceName = () => /iPad|Tablet/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? '태블릿' : /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '휴대폰' : '인터넷';
+class LoginNeeded extends Error { constructor() { super('로그인이 필요합니다. 마이크로소프트 계정으로 다시 로그인해 주세요.'); this.name = 'LoginNeeded'; } }
+async function msLogin() {
+  if (!MS.clientId) return alert('마이크로소프트 등록 번호가 아직 설정되지 않았습니다.');
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  sessionStorage.setItem('ms_pkce', JSON.stringify({ verifier, state, hash: location.hash }));
+  location.href = `${MS.authority}/authorize?` + new URLSearchParams({ client_id: MS.clientId, response_type: 'code', redirect_uri: msRedirect(), scope: MS.scope, code_challenge: challenge, code_challenge_method: 'S256', state, response_mode: 'query', prompt: 'select_account' });
+}
+async function msHandleRedirect() { // 로그인하고 돌아왔을 때 (?code=…)
+  const p = new URLSearchParams(location.search);
+  if (!p.get('code') && !p.get('error')) return;
+  const saved = JSON.parse(sessionStorage.getItem('ms_pkce') || '{}'); sessionStorage.removeItem('ms_pkce');
+  history.replaceState(null, '', msRedirect() + (saved.hash || ''));
+  if (p.get('error')) throw new Error('로그인하지 못했습니다: ' + (p.get('error_description') || p.get('error')));
+  if (!saved.state || saved.state !== p.get('state')) throw new Error('로그인 확인값이 맞지 않습니다. 다시 로그인해 주세요.');
+  await msToken({ grant_type: 'authorization_code', code: p.get('code'), code_verifier: saved.verifier, redirect_uri: msRedirect() });
+}
+async function msToken(params) {
+  const r = await fetch(`${MS.authority}/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: MS.clientId, scope: MS.scope, ...params }) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error_description || j.error || '로그인 오류');
+  let name = msTok()?.name || '';
+  try { const c = JSON.parse(decodeURIComponent(escape(atob(j.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); name = c.name || c.preferred_username || name; } catch {}
+  const t = { access: j.access_token, refresh: j.refresh_token || msTok()?.refresh, exp: Date.now() + (j.expires_in - 120) * 1000, name };
+  localStorage.setItem(MS_KEY, JSON.stringify(t)); return t;
+}
+async function msAccess() { // 쓸 수 있는 출입증(토큰). 만료됐으면 새로 받고, 그것도 안 되면 다시 로그인
+  const t = msTok(); if (!t) throw new LoginNeeded();
+  if (Date.now() < t.exp) return t.access;
+  try { return (await msToken({ grant_type: 'refresh_token', refresh_token: t.refresh })).access; }
+  catch { localStorage.removeItem(MS_KEY); throw new LoginNeeded(); }
+}
+function msLogout() {
+  if (S.meta?.dirty && !confirm('아직 OneDrive에 저장하지 못한 변경이 있습니다. 로그아웃하면 이 기기에서 사라집니다. 계속할까요?')) return;
+  if (!confirm('로그아웃할까요?\n이 기기에 임시로 보관한 데이터도 함께 지웁니다. (OneDrive의 데이터는 그대로)')) return;
+  try { localStorage.removeItem(MS_KEY); localStorage.removeItem(KEY); } catch {}
+  location.href = msRedirect();
+}
+const gUrl = segs => 'https://graph.microsoft.com/v1.0/me/drive/root:/' + segs.map(encodeURIComponent).join('/');
+async function graph(url, opt = {}) {
+  const r = await fetch(url, { ...opt, cache: 'no-store', headers: { Authorization: 'Bearer ' + await msAccess(), ...(opt.headers || {}) } });
+  if (r.status === 401) { localStorage.removeItem(MS_KEY); throw new LoginNeeded(); }
+  if (r.status === 404) { const e = new Error('OneDrive에 파일이 없습니다'); e.name = 'NotFoundError'; throw e; }
+  if (!r.ok) throw new Error(`OneDrive 오류 (${r.status}) ${(await r.text()).slice(0, 150)}`);
+  return r;
+}
+// PC의 파일 연결과 같은 모양으로 만든 OneDrive 파일 (getFile로 읽기, createWritable로 쓰기)
+function graphFile(segs) {
+  const url = gUrl(segs), name = segs[segs.length - 1];
+  return {
+    kind: 'file', name, queryPermission: async () => 'granted', requestPermission: async () => 'granted',
+    async getFile() {
+      const m = await (await graph(url)).json();
+      const blob = await (await fetch(m['@microsoft.graph.downloadUrl'], { cache: 'no-store' })).blob();
+      return new File([blob], name, { type: m.file?.mimeType || blob.type, lastModified: Date.parse(m.lastModifiedDateTime) || Date.now() });
+    },
+    async createWritable() {
+      const parts = [];
+      return { write: async d => { parts.push(d); }, close: async () => { await graph(url + ':/content', { method: 'PUT', body: new Blob(parts) }); } };
+    }
+  };
+}
+function graphDir(segs) {
+  return {
+    kind: 'directory', name: segs[segs.length - 1], queryPermission: async () => 'granted', requestPermission: async () => 'granted',
+    async getFileHandle(n, opt = {}) { if (!opt.create) await graph(gUrl([...segs, n])); return graphFile([...segs, n]); } // 없으면 NotFoundError
+  };
+}
+const pickLocalFile = () => new Promise(res => { const i = document.createElement('input'); i.type = 'file'; i.accept = '.pdf,image/*'; i.onchange = () => res(i.files[0] || null); i.click(); });
+async function webInit() {
+  renderSyncUI();
+  try { await msHandleRedirect(); } catch (e) { WEBST.error = e.message; }
+  if (!pcName()) try { localStorage.setItem(PC_KEY, deviceName()); } catch {}
+  DIR.handle = graphDir([MS.folder, MS.contractFolder]); DIR.state = 'ok';
+  if (!msTok()) { render(); return; }
+  await webLoad();
+}
+async function webLoad() { // 로그인한 뒤: OneDrive 데이터 파일을 불러와야 업무 화면을 보여 줌
+  SYNC.handle = graphFile([MS.folder, MS.dataFile]); SYNC.baseRev = revOf(S); SYNC.state = 'ok'; SYNC.error = '';
+  WEBST.loading = true; WEBST.error = ''; render();
+  await syncTask(pullFromFile);
+  WEBST.loading = false;
+  if (SYNC.state === 'ok' || SYNC.state === 'conflict') WEBST.ready = true; else WEBST.error = SYNC.error;
+  renderSyncUI(); render();
+}
+function webGateHtml() { // 로그인·첫 불러오기 전에는 업무 화면 대신 이 안내를 보여 줌
+  const t = msTok();
+  const body = !MS.clientId ? '<p>설정이 아직 끝나지 않았습니다. (마이크로소프트 등록 번호 없음)</p>'
+    : WEBST.loading ? '<p>OneDrive에서 데이터를 불러오는 중입니다…</p>'
+    : !t ? `<p>OneDrive의 데이터 파일을 쓰려면 마이크로소프트 계정으로 로그인해 주세요.<br><span class="muted">PC의 OneDrive와 같은 계정이어야 합니다.</span></p>
+        <div class="fg" style="grid-template-columns:1fr;max-width:260px;margin:0 auto 14px;text-align:left"><label>이 기기 이름<input value="${esc(pcName())}" onchange="setPcName(this.value)" placeholder="예: 휴대폰, 태블릿"><span class="hint">어느 기기에서 저장했는지 기록할 때 씁니다</span></label></div>
+        <button class="btn pri" onclick="msLogin()">마이크로소프트 계정으로 로그인</button>`
+    : `<p class="down">데이터를 불러오지 못했습니다.<br>${esc(WEBST.error)}</p><button class="btn pri" onclick="webLoad()">다시 시도</button> <button class="btn" onclick="msLogin()">다시 로그인</button>`;
+  return `<div class="card" style="max-width:440px;margin:40px auto;text-align:center"><h2 style="justify-content:center">번영손해사정 업무관리</h2>${WEBST.error && !t ? `<p class="down">${esc(WEBST.error)}</p>` : ''}${body}</div>`;
+}
+function webCardHtml() { // 백업·설정 탭의 OneDrive 칸 (인터넷 버전)
+  const t = msTok(), m = S.meta || {};
+  return `<div class="card mb"><h2>OneDrive 연결 (인터넷 버전) ${SYNC.state === 'ok' ? '<span class="badge good">✓ 동기화 중</span>' : SYNC.state === 'conflict' ? '<span class="badge crit">⚠ 충돌</span>' : '<span class="badge crit">⚠ 오류</span>'}</h2>
+    <div class="fg" style="grid-template-columns:1fr;max-width:320px;margin-bottom:12px"><label>이 기기 이름 <input id="pcName" value="${esc(pcName())}" placeholder="예: 휴대폰, 태블릿" onchange="setPcName(this.value)"></label></div>
+    <div class="tw"><table class="t"><tbody>
+      <tr><td class="ink2">마이크로소프트 계정</td><td>${esc(t?.name || '-')}</td></tr>
+      <tr><td class="ink2">데이터 파일</td><td>OneDrive › ${esc(MS.folder)} › <b>${esc(MS.dataFile)}</b></td></tr>
+      <tr><td class="ink2">마지막 파일 저장</td><td>${m.savedAtIso ? `${esc(m.savedBy || '')} · ${fmtIso(m.savedAtIso)} (저장 번호 ${m.rev || 0})` : '<span class="muted">-</span>'}</td></tr>
+      <tr><td class="ink2">마지막 확인</td><td>${SYNC.lastCheck || '<span class="muted">-</span>'}</td></tr>
+      <tr><td class="ink2">계약서 폴더</td><td>OneDrive › ${esc(MS.folder)} › ${esc(MS.contractFolder)}</td></tr>
+    </tbody></table></div>
+    <p style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0"><button class="btn" onclick="syncCheckNow()">지금 최신 상태 확인</button><button class="btn dan" onclick="msLogout()">로그아웃</button></p>
+    <p class="muted" style="font-size:12px;margin-bottom:0">로그인은 하루쯤 지나면 다시 해야 할 수 있습니다. 다른 사람과 같이 쓰는 기기에서는 다 쓴 뒤 로그아웃해 주세요.</p></div>`;
+}
+
+/* ---------- router ---------- */
+function updateCounts() {
+  $('#cnt-open').textContent = S.cases.filter(isOpen).length;
+  $('#cnt-unpaid').textContent = unpaidBills().length;
+  $('#cnt-leads').textContent = leadsOf().filter(leadOpen).length || '';
+}
+function render() {
+  const v = (location.hash.slice(1) || 'dashboard').split('/')[0];
+  const view = views[v] ? v : 'dashboard';
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
+  $('#main').classList.toggle('wide', ['dashboard', 'leads', 'cases', 'contracts', 'collect', 'revenue', 'tax'].includes(view));
+  if (WEB && !WEBST.ready) { $('#main').innerHTML = webGateHtml(); return; } // 인터넷 버전: 로그인·불러오기 전
+  $('#main').innerHTML = views[view]();
+  views[view].after?.();
+}
+$('#main').addEventListener('click', collectClick);
+window.addEventListener('hashchange', () => { window.scrollTo(0, 0); render(); });
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const v = location.hash.slice(1) || 'dashboard'; if (v === 'dashboard' || v === 'revenue') render(); }, 200); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+load(); updateCounts(); $('#savedAt').textContent = '자동 저장됨'; render(); initSync(); initContractDir();
+</script>
+</body>
+</html>
