@@ -1556,7 +1556,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-open
    PC에서 파일을 직접 열 때(file://)는 이 부분을 쓰지 않는다. */
 const WEB = location.protocol === 'https:';
 const MS = {
-  clientId: '', // 마이크로소프트에 등록한 프로그램 번호(애플리케이션 ID). 등록 후 채움
+  clientId: 'a7264a41-b1f7-43ae-8b7c-e7da26df99a4', // Azure 앱 등록 "번영손해사정 업무관리"의 애플리케이션(클라이언트) ID (비밀 아님)
   authority: 'https://login.microsoftonline.com/consumers/oauth2/v2.0', // 개인 마이크로소프트 계정
   scope: 'Files.ReadWrite offline_access openid profile',
   folder: '번영손해사정', dataFile: '번영손해사정_데이터.json', contractFolder: '계약서'
