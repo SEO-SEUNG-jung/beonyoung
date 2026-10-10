@@ -957,6 +957,76 @@ function taxExpectedCardHtml() {
   const sum = f => won(rows.reduce((a, r) => a + r[f], 0));
   return `<div class="card mb"><h2>예상 종결별 예정 매출세액 <span class="note">미결 사건의 미입금 부가세 · 예상 종결년월 기준</span></h2>${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th>신고 반기</th><th class="r">건수</th><th class="r">수수료</th><th class="r">부가세(매출세액)</th><th>사건</th></tr></thead><tbody>${rows.map(r => `<tr><td class="nowrap"><b>${r.k === 'none' ? '미입력' : `${r.k.slice(0, 4)}년 ${+r.k.slice(5)}월`}</b>${r.k === 'none' ? ' <span class="badge warn">● 입력 필요</span>' : r.k < todayStr().slice(0, 7) ? ' <span class="badge crit">⚠ 지남</span>' : ''}</td><td class="nowrap">${half(r.k)}</td><td class="r">${r.cases.size}</td><td class="r">${won(r.fee)}</td><td class="r"><b>${won(r.vat)}</b></td><td style="white-space:normal;min-width:240px">${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="2">합계</td><td class="r">${rows.reduce((a, r) => a + r.cases.size, 0)}</td><td class="r">${sum('fee')}</td><td class="r">${sum('vat')}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">미결 사건의 수금 예정 건이 없습니다.</div>'}</div>`;
 }
+/* ---------- 세금 적립 (2026-10-11): 지금 세금 통장에 있어야 할 금액 = 아직 안 낸 부가세 + 아직 안 낸 종합소득세 (모두 예상치) ----------
+   ※ 이 사무소의 부가세·소득세 표에서 「지출부가세」(expVat)는 실제로 낸 부가세(예정고지+확정)다(예: 2026 상반기 2,856,000+2,916,990=5,772,990).
+   - 부가세(반기): 그 반기 입금분 부가세 × 납부율(최근 3년 낸 부가세 ÷ 매출세액) − 이미 낸 예정고지(4/25·10/25, 직전 반기에 낸 부가세의 50%, 50만원 미만이면 고지 없음).
+     확정 납부일(7/25 · 다음 해 1/25)이 지나면 목록에서 빠짐.
+   - 종합소득세(연도): 그 해 입금 수수료 × 적립률(5월 확정 납부분) + 아직 안 냈으면 11/30 중간예납(전년 소득세의 50%). 다음 해 5/31이 지나면 빠짐.
+   - 적립률: S.meta.taxRate(%)가 비어 있으면 자동 = 작년 소득세(표의 그 해 소득세 = 다음 해 5월에 낸 금액) ÷ 작년 입금 수수료 × 1.1(지방소득세).
+   - 모아 둔 금액: S.meta.taxSaved, 기준일 S.meta.taxSavedAt (다른 프로그램은 이 값을 읽지 않음) */
+function taxPlan() {
+  const T = todayStr(), Y = +T.slice(0, 4), m = S.meta || {};
+  const paidIn = (a, b) => { let vat = 0, fee = 0; for (const c of S.cases) for (const x of c.billings) if (x.paidDate && x.paidDate >= a && x.paidDate <= b && x.paidDate <= T) { vat += x.vat || 0; fee += x.fee || 0; } return { vat, fee }; };
+  const lab = t => String(t.label || '').replace(/\s/g, '');
+  const halfRows = (y, h) => S.tax.filter(t => +t.year === y && (h === 1 ? lab(t).startsWith('상반기') : lab(t).startsWith('후반기') || lab(t).startsWith('하반기')));
+  const taxOf = y => S.tax.filter(t => +t.year === y).reduce((a, t) => a + (+t.incomeTax || 0), 0);
+  // 납부율(낸 부가세 ÷ 매출세액): 최근 3년, 낸 금액이 기록된 반기만
+  const rs = S.tax.filter(t => +t.year >= Y - 3 && +t.salesVat > 0 && +t.expVat > 0), sS = rs.reduce((a, t) => a + +t.salesVat, 0), sE = rs.reduce((a, t) => a + (+t.expVat || 0), 0);
+  const payR = sS ? Math.min(1, sE / sS) : 0.85;
+  let base = null; for (let y = Y - 1; y >= Y - 3; y--) { const tx = taxOf(y), f = paidIn(`${y}-01-01`, `${y}-12-31`).fee; if (tx > 0 && f > 0) { base = { y, tx, f }; break; } }
+  const autoRate = base ? base.tx / base.f * 1.1 : 0.03, manual = m.taxRate != null && m.taxRate !== '';
+  const rate = manual ? (+m.taxRate || 0) / 100 : autoRate;
+  const items = [];
+  // 부가세: 지난 반기·이번 반기 중 확정 납부일이 안 지난 것
+  const curH = +T.slice(5, 7) <= 6 ? 1 : 2;
+  for (const [y, h] of [curH === 1 ? [Y - 1, 2] : [Y, 1], [Y, curH]]) {
+    const st = `${y}-${h === 1 ? '01-01' : '07-01'}`, en = `${y}-${h === 1 ? '06-30' : '12-31'}`;
+    const finalDue = h === 1 ? `${y}-07-25` : `${y + 1}-01-25`, preDue = `${y}-${h === 1 ? '04-25' : '10-25'}`;
+    if (T > finalDue) continue;
+    const [py, ph] = h === 1 ? [y - 1, 2] : [y, 1], pr = halfRows(py, ph);
+    const prevPaid = pr.some(t => +t.expVat > 0) ? pr.reduce((a, t) => a + (+t.expVat || 0), 0) : paidIn(`${py}-${ph === 1 ? '01-01' : '07-01'}`, `${py}-${ph === 1 ? '06-30' : '12-31'}`).vat * payR;
+    let pre = Math.round(prevPaid * 0.5); if (pre < 500000) pre = 0;
+    const got = paidIn(st, en).vat, net = Math.round(got * payR), prePaid = pre > 0 && T > preDue;
+    const hold = prePaid ? Math.max(0, net - pre) : Math.max(net, pre);
+    items.push({ kind: '부가세', title: `${y}년 ${h === 1 ? '상반기(1~6월)' : '후반기(7~12월)'} 부가세`, due: finalDue, hold,
+      how: `입금분 부가세 ${won(got)} × 납부율 ${pct(payR, 0)} = ${won(net)}${pre ? (prePaid ? ` − ${fmtDate(preDue)} 예정고지 ${won(pre)}(낸 것으로 봄)` : ` · 이 중 ${fmtDate(preDue)}에 예정고지 약 ${won(pre)} 먼저 냄`) : ''}` });
+  }
+  // 종합소득세: 올해분 + (5/31 전이면) 작년분. 중간예납(11/30)은 아직 안 냈으면 더함
+  for (const y of T <= `${Y}-05-31` ? [Y - 1, Y] : [Y]) {
+    const f = paidIn(`${y}-01-01`, `${y}-12-31`).fee, est = Math.round(f * rate), mid = Math.round(taxOf(y - 1) * 0.5), midPaid = T > `${y}-11-30`;
+    items.push({ kind: '소득세', title: `${y}년 소득분 종합소득세`, due: midPaid || !mid ? `${y + 1}-05-31` : `${y}-11-30`, hold: est + (midPaid ? 0 : mid),
+      how: `${y}년 입금 수수료 ${won(f)} × 적립률 ${pct(rate, 2)} = ${won(est)} (${y + 1}.5월 확정분)${mid ? (midPaid ? ` · ${y}.11 중간예납 ${won(mid)}은 낸 것으로 봄` : ` + ${y}.11.30 중간예납 약 ${won(mid)}`) : ''}` });
+  }
+  const total = items.reduce((a, i) => a + i.hold, 0);
+  // 최근 입금마다 떼어 둘 금액(최근 60일)
+  const from = (() => { const d = new Date(); d.setDate(d.getDate() - 60); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
+  const recent = []; for (const c of S.cases) for (const x of c.billings) if (x.paidDate && x.paidDate >= from && x.paidDate <= T) recent.push({ c, x, put: Math.round((x.vat || 0) * payR + (x.fee || 0) * rate) });
+  recent.sort((a, b) => a.x.paidDate < b.x.paidDate ? 1 : -1);
+  return { items, total, rate, autoRate, manual, base, payR, recent };
+}
+function taxReserveCardHtml() {
+  const P = taxPlan(), m = S.meta || {}, saved = m.taxSaved == null || m.taxSaved === '' ? null : +m.taxSaved, gap = saved == null ? null : saved - P.total;
+  const due = d => { const n = days(todayStr(), d); return `${fmtDate(d)} <span class="muted">(${n}일 남음)</span>`; };
+  return `<div class="card mb"><h2>💰 세금 적립 <span class="note">지금 세금 통장에 있어야 할 금액 · 입금 기록으로 계산한 예상치</span></h2>
+    <div class="kpis k3" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="kpi"><div class="l">지금 있어야 할 금액</div><div class="v">${won(P.total)}</div><div class="s">아직 안 낸 부가세 + 종합소득세</div></div>
+      <div class="kpi"><div class="l">모아 둔 금액 ${m.taxSavedAt ? `<span class="muted">(${fmtDate(m.taxSavedAt)} 기준)</span>` : ''}</div><div class="v"><input class="cell" id="taxSaved" style="width:100%;font-size:20px;font-weight:700;text-align:right" value="${saved == null ? '' : won(saved)}" placeholder="세금 통장 잔액 입력"></div><div class="s">세금 통장 잔액을 넣으면 부족분을 계산</div></div>
+      <div class="kpi"><div class="l">${gap == null ? '부족 / 여유' : gap < 0 ? '부족' : '여유'}</div><div class="v" style="color:${gap == null ? 'var(--muted)' : gap < 0 ? 'var(--crit-ink)' : 'var(--good-ink)'}">${gap == null ? '-' : (gap < 0 ? '−' : '+') + won(Math.abs(gap))}</div><div class="s">${gap == null ? '모아 둔 금액을 넣으면 보입니다' : gap < 0 ? '이만큼 더 떼어 두세요' : '세금 낼 돈은 충분합니다'}</div></div>
+    </div>
+    <div class="tw"><table class="t"><thead><tr><th>세금</th><th>계산</th><th>납부 기한</th><th class="r">있어야 할 금액</th></tr></thead><tbody>
+      ${P.items.map(i => `<tr><td class="nowrap"><b>${esc(i.title)}</b></td><td class="ink2" style="font-size:12.5px">${i.how}</td><td class="nowrap">${due(i.due)}</td><td class="r"><b>${won(i.hold)}</b></td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="3">합계</td><td class="r">${won(P.total)}</td></tr></tfoot></table></div>
+    <div class="fg" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px;max-width:640px">
+      <label>종합소득세 적립률 (%)<input id="taxRate" value="${P.manual ? esc(String(m.taxRate)) : ''}" placeholder="자동 ${(P.autoRate * 100).toFixed(2)}"><span class="hint">${P.manual ? `직접 넣은 값 · 비우면 자동 ${(P.autoRate * 100).toFixed(2)}%` : P.base ? `자동: ${P.base.y}년 소득세 ${won(P.base.tx)} ÷ 입금 수수료 ${won(P.base.f)} × 1.1(지방소득세)` : '작년 소득세 기록이 없어 3%로 계산'}</span></label>
+      <div class="fl">부가세 납부율 (자동)<b style="font-size:15px;color:var(--ink)">${pct(P.payR, 1)}</b><span class="hint">최근 3년 실제 낸 부가세(아래 표의 지출부가세) ÷ 매출세액</span></div>
+    </div>
+    ${P.recent.length ? `<h3 style="margin:16px 0 6px;font-size:14px">최근 입금마다 떼어 둘 금액 <span class="muted" style="font-weight:400">최근 60일 · 부가세×납부율 + 수수료×적립률</span></h3>
+    <div class="tw"><table class="t"><thead><tr><th>입금일</th><th>사건</th><th class="r">입금액</th><th class="r">떼어 둘 금액</th></tr></thead><tbody>
+      ${P.recent.map(r => `<tr><td class="nowrap">${fmtDate(r.x.paidDate)}</td><td>${esc(r.c.name)}</td><td class="r">${won(billTotal(r.x))}</td><td class="r"><b>${won(r.put)}</b></td></tr>`).join('')}
+    </tbody></table></div>` : ''}
+    <p class="ink2" style="font-size:12.5px;margin:10px 0 0">예상치입니다. 실제 세액은 경비·공제에 따라 달라지니, 신고 전에는 세무사 안내 금액을 따르세요. 예정고지는 직전 반기 납부세액의 절반이 50만원 이상일 때만 나옵니다.</p>
+  </div>`;
+}
 views.tax = () => {
   const rows = [...S.tax].sort((a, b) => a.year - b.year || (a.label > b.label ? 1 : -1));
   let tS = 0, tE = 0, tI = 0;
@@ -970,6 +1040,7 @@ views.tax = () => {
     <td class="nowrap acts">${halfRange(t) ? `<button class="btn sm" data-alloc="${t.id}" title="이 기간 입금된 사건에 지출부가세·소득세를 비율대로 배분">사건별 배분</button>` : ''} <button class="btn sm dan" data-del="${t.id}">삭제</button></td></tr>`;
   }).join('');
   return `<div class="head"><h1>부가세 · 소득세</h1><span class="sub">반기별 신고 내역 · 셀을 클릭해 바로 수정</span><span class="sp"></span><button class="btn pri" id="taxAdd">+ 신고 기간 추가</button></div>
+  ${taxReserveCardHtml()}
   <div class="card mb" style="padding:0"><div class="tw"><table class="t taxt"><thead><tr><th>연도</th><th>구분</th><th class="r">매출세액</th><th class="r">자동집계(참고)</th><th class="r">예정(예상 종결)</th><th class="r">지출부가세</th><th class="r">지출율</th><th class="r">이득 부가세</th><th class="r">환급율</th><th class="r">소득세</th><th>메모</th><th></th></tr></thead><tbody>${body}</tbody>
   <tfoot><tr><td colspan="2">합계</td><td class="r">${won(tS)}</td><td></td><td></td><td class="r">${won(tE)}</td><td class="r">${tS ? pct(tE / tS) : '-'}</td><td class="r">${won(tS - tE)}</td><td></td><td class="r">${won(tI)}</td><td colspan="2"></td></tr></tfoot></table></div></div>
   ${taxExpectedCardHtml()}
@@ -980,7 +1051,9 @@ views.tax = () => {
     <li><b>사건별 배분</b>: 그 반기에 입금된 사건들에 지출부가세(부가세 비율)와 소득세(청구액 비율)를 나눠 넣어, 사건별 순이익에 반영합니다. 기존 배분값을 덮어씁니다.</li></ul></div>`;
 };
 views.tax.after = () => {
-  const tb = document.querySelector('tbody');
+  const tb = document.querySelector('.taxt tbody'); // 위 「세금 적립」 카드에도 표가 있어서 신고표만 고름
+  $('#taxSaved').onchange = e => { const v = e.target.value.trim(); S.meta.taxSaved = v === '' ? null : num(v); S.meta.taxSavedAt = v === '' ? '' : todayStr(); save(); render(); };
+  $('#taxRate').onchange = e => { const v = e.target.value.trim(); S.meta.taxRate = v === '' ? null : num(v); save(); render(); };
   tb.addEventListener('change', e => {
     const f = e.target.dataset.f; if (!f) return; const t = S.tax.find(x => x.id === e.target.closest('tr').dataset.id);
     t[f] = f === 'label' || f === 'memo' ? e.target.value : num(e.target.value); save(); render();
