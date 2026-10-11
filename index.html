@@ -639,7 +639,7 @@ views.dashboard = () => {
     <div class="card"><h2>할 일 · 기한 <span class="note">미결 사건의 다음 할 일</span></h2>
       <div class="list">${todo.length ? todo.map(({ c, t }) => `<div class="li" onclick="openCase('${c.id}')">${t.text ? `<input type="checkbox" class="todo-cb" title="완료 처리 (진행일지에 기록)" onclick="dashDone(event,'${c.id}','${t.id}')">` : '<span class="todo-cb"></span>'}<div class="m"><div><b>${esc(c.name)}</b></div><small>${esc(t.text || '다음 할 일 미입력')}${t.start ? ` · ${periodText(t)}` : ''} · ${esc(c.stage || '단계 미지정')}</small></div>${dueBadge(c, t)}</div>`).join('') : '<div class="empty">등록된 할 일이 없습니다. 사건 상세에서 “다음 할 일”과 기한을 입력하세요.</div>'}</div>
       ${leadsToday.length ? `<div class="tgroup" style="margin-top:14px">📰 오늘 연락할 영업 리드 <span class="muted" style="font-weight:400">${leadsToday.length}건</span></div>
-      <div class="list">${leadsToday.map(l => `<div class="li" onclick="openLead('${l.id}')"><span class="todo-cb"></span><div class="m"><div><b>${esc(l.name)}</b></div><small>${esc(l.nextAction || '다음 액션 미입력')}${l.phone ? ' · ' + esc(l.phone) : ''} · ${esc(l.stage)}</small></div>${leadDateBadge(l)}</div>`).join('')}</div>` : ''}
+      <div class="list">${leadsToday.map(l => `<div class="li" onclick="openLead('${l.id}')">${leadCb(l)}<div class="m"><div><b>${esc(l.name)}</b></div><small>${esc(l.nextAction || '다음 액션 미입력')}${l.phone ? ' · ' + esc(l.phone) : ''} · ${esc(l.stage)}</small></div>${leadDateBadge(l)}</div>`).join('')}</div>` : ''}
     </div>
     <div class="card"><h2>월별 예상 수금 <span class="note">예상 종결년월 기준 · VAT 포함 · <a href="#collect">수금 관리 →</a></span></h2>
       ${expectedByMonthHtml(ub)}
@@ -1151,6 +1151,21 @@ function leadDateBadge(l) { // 다음 연락일: 진행 중인 리드만
   if (d <= 3) return `<span class="badge warn">● 연락 D-${d}</span>`;
   return `<span class="badge">연락 ${md(l.nextDate)}</span>`;
 }
+// 리드 다음 액션 완료: 리드의 완료 기록(l.logs)에 "✓ 완료: …"로 남기고 다음 액션·다음 연락일을 비움 → 목록·대시보드에서 사라짐
+function completeLeadAction(l) {
+  const tx = (l.nextAction || '').trim(); if (!tx) return false;
+  const today = todayStr(), late = l.nextDate && l.nextDate < today ? ` (연락일 ${fmtDate(l.nextDate)}, ${days(l.nextDate, today)}일 지남)` : '';
+  l.logs = [{ date: today, text: `✓ 완료: ${tx}${late}` }, ...(l.logs || [])];
+  l.nextAction = ''; l.nextDate = '';
+  return true;
+}
+function leadDone(ev, id) { // 목록·대시보드·할 일 화면의 체크 칸
+  ev.stopPropagation();
+  const l = leadsOf().find(x => x.id === id), cb = ev.target;
+  if (!l || !l.nextAction || !confirm(`“${l.nextAction}” 완료 처리할까요?\n리드의 완료 기록에 남고, 다음 액션·다음 연락일은 비워집니다.`)) { cb.checked = false; return; }
+  completeLeadAction(l); save(true); updateCounts(); render(); toast(`${l.name} · 다음 액션을 완료했습니다`);
+}
+const leadCb = l => l.nextAction ? `<input type="checkbox" class="todo-cb" title="다음 액션 완료 (리드 완료 기록에 남김)" onclick="leadDone(event,'${l.id}')">` : '<span class="todo-cb"></span>';
 let LF = { q: '', year: 'all', status: 'all', type: '', region: '', sort: 'no', dir: -1 };
 function filterLeads(f) {
   const q = (f.q || '').trim().toLowerCase();
@@ -1208,7 +1223,7 @@ function renderLeads() {
     <td class="nowrap">${fmtDate(l.accidentDate) || '-'}<div class="muted" style="font-size:12px">${l.contactDate ? '접촉 ' + fmtDate(l.contactDate) : ''}</div></td>
     <td class="r">${l.estLoss ? won(l.estLoss) : '<span class="muted">-</span>'}</td><td class="r">${l.rate ? pct(l.rate, 1) : '<span class="muted">-</span>'}</td><td class="r">${leadFee(l) ? `<b>${won(leadFee(l))}</b>` : '<span class="muted">-</span>'}</td>
     <td class="nowrap">${l.consumerRight === '선임권 행사' ? '<span class="badge good">선임권 행사</span>' : `<span class="muted">${esc(l.consumerRight || '-')}</span>`}</td>
-    <td>${l.nextAction ? `<div class="na" title="${esc(l.nextAction)}">${esc(l.nextAction)}</div>` : ''}${leadDateBadge(l)}</td>
+    <td>${l.nextAction ? `<div style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" title="다음 액션 완료 (리드 완료 기록에 남김)" onclick="leadDone(event,'${l.id}')" style="margin-top:3px;flex-shrink:0"><div class="na" title="${esc(l.nextAction)}">${esc(l.nextAction)}</div></div>` : ''}${leadDateBadge(l)}</td>
     <td>${result(l)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 리드가 없습니다.</div>';
   const fails = Object.entries(lost.reduce((a, l) => (a[l.failReason || '사유 미입력'] = (a[l.failReason || '사유 미입력'] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1]);
   const mx = Math.max(1, ...fails.map(f => f[1]));
@@ -1274,9 +1289,10 @@ function drawLead() {
       <label>예상 보수<input value="${won(leadFee(l))}" disabled><span class="hint">추정 손해액 × 보수율 (저장하면 다시 계산)</span></label>
     </div></fieldset>
     <fieldset><legend>다음 액션</legend><div class="fg">
-      <label class="w3" style="grid-column:span 3">다음 액션<input data-lf="nextAction" value="${esc(l.nextAction)}" placeholder="예: 피해 주택 방문해 명함 및 제안서 전달"></label>
+      <div class="fl w3" style="grid-column:span 3">다음 액션<span style="display:flex;gap:8px;align-items:center"><input data-lf="nextAction" value="${esc(l.nextAction)}" placeholder="예: 피해 주택 방문해 명함 및 제안서 전달"><label class="nowrap" style="flex-direction:row;align-items:center;gap:5px;flex-shrink:0;color:var(--ink);font-size:13px" title="체크하면 완료 기록에 남고 다음 액션·다음 연락일이 비워집니다"><input type="checkbox" data-lact="doneAction"> 완료</label></span></div>
       <label>다음 연락일<input type="date" data-lf="nextDate" value="${l.nextDate || ''}"><span class="hint">지나면 목록에 빨간색</span></label>
       <label class="w4">메모<textarea data-lf="memo" rows="2">${esc(l.memo)}</textarea></label>
+      ${(l.logs || []).length ? `<div class="fl w4">완료한 액션<span class="logs">${l.logs.map(g => `<span class="log"><span class="d">${fmtDate(g.date)}</span><span>${esc(g.text)}</span></span>`).join('')}</span></div>` : ''}
     </div></fieldset>
     ${l.notionUrl ? `<p class="muted" style="font-size:12px;margin:12px 0 0">노션에서 옮겨 온 리드입니다 · <a href="${esc(l.notionUrl)}" target="_blank" rel="noopener">노션 원본 보기 ↗</a></p>` : ''}
   </div>
@@ -1301,6 +1317,12 @@ $('#dlg').addEventListener('click', e => {
   if (act === 'delete') { if (confirm(`“${LEDIT.name}” 리드를 삭제할까요? 되돌릴 수 없습니다.`)) { S.leads = leadsOf().filter(x => x.id !== LEDIT.id); save(); $('#dlg').close(); LEDIT = null; render(); } return; }
   if (act === 'save') { if (storeLead()) { $('#dlg').close(); LEDIT = null; render(); toast('리드를 저장했습니다'); } return; }
   if (act === 'full') { readLead(); LEDIT._full = true; drawLead(); return; } // 휴대폰 빠른 입력 → 전체 항목
+  if (act === 'doneAction') { // 다음 액션 완료 → 완료 기록에 남기고 비움 ([저장]을 눌러야 반영)
+    readLead();
+    if (!completeLeadAction(LEDIT)) { t.checked = false; alert('완료할 “다음 액션”을 먼저 입력하세요.'); return; }
+    const sc = $('#lform')?.scrollTop; drawLead(); if (sc != null) $('#lform').scrollTop = sc;
+    toast('완료 기록에 남겼습니다 · [저장]을 눌러 반영하세요'); return;
+  }
   if (act === 'openCase') { const cid = LEDIT.caseId; LEDIT = null; openCase(cid); return; }
   if (act === 'toCase') { // 리드 저장 → 새 사건 수임 창을 리드 내용으로 채워 열기 (사건을 저장해야 연결됨)
     if (!storeLead()) return;
@@ -1327,7 +1349,7 @@ function leadCardHtml(l) { // 영업 리드 목록의 휴대폰 카드
   return `<div class="mcard" data-id="${l.id}">
     <div class="t1"><b>${esc(l.name)}</b>${leadStageBadge(l)}</div>
     <div class="t2">${[l.type, l.region, l.phone, l.accidentDate && '사고 ' + fmtDate(l.accidentDate)].filter(Boolean).map(esc).join(' · ')}${leadFee(l) ? ` · 예상 보수 ${short(leadFee(l))}` : ''}</div>
-    ${l.nextAction || l.nextDate ? `<div class="t3"><span class="tx">${esc(l.nextAction || '')}</span>${leadDateBadge(l)}</div>` : ''}
+    ${l.nextAction || l.nextDate ? `<div class="t3">${l.nextAction ? leadCb(l) : ''}<span class="tx">${esc(l.nextAction || '')}</span>${leadDateBadge(l)}</div>` : ''}
     ${l.caseId && S.cases.some(c => c.id === l.caseId) ? `<div class="t3"><a href="#" data-case="${l.caseId}">📁 사건 보기</a></div>` : l.stage === '수임 실패' && l.failReason ? `<div class="t2">실패 사유: ${esc(l.failReason)}</div>` : ''}
   </div>`;
 }
@@ -1342,7 +1364,7 @@ views.todos.after = () => {
     <button class="btn sm" data-qlog="${c.id}">✎ 일지</button></div>`;
   const leads = leadsOf().filter(l => leadOpen(l) && l.nextDate && days(today, l.nextDate) <= 7).sort((a, b) => a.nextDate < b.nextDate ? -1 : 1);
   $('#todoBody').innerHTML = (items.length ? G.map(([k, label]) => { const xs = items.filter(x => grp(x.t) === k); return xs.length ? `<div class="tgroup">${label} <span class="muted" style="font-weight:400">${xs.length}건</span></div><div class="card" style="padding:4px 12px"><div class="list">${xs.map(row).join('')}</div></div>` : ''; }).join('') : '<div class="card"><div class="empty">미결 사건에 등록된 할 일이 없습니다.</div></div>')
-    + `<div class="tgroup">영업 리드 연락 (7일 안·지남) <span class="muted" style="font-weight:400">${leads.length}건</span></div><div class="card" style="padding:4px 12px">${leads.length ? `<div class="list">${leads.map(l => `<div class="li" onclick="openLead('${l.id}')"><div class="m"><div><b>${esc(l.name)}</b></div><small>${esc(l.nextAction || '다음 액션 미입력')}${l.phone ? ' · ' + esc(l.phone) : ''}</small></div>${leadDateBadge(l)}</div>`).join('')}</div>` : '<div class="empty">연락할 리드가 없습니다.</div>'}</div>
+    + `<div class="tgroup">영업 리드 연락 (7일 안·지남) <span class="muted" style="font-weight:400">${leads.length}건</span></div><div class="card" style="padding:4px 12px">${leads.length ? `<div class="list">${leads.map(l => `<div class="li" onclick="openLead('${l.id}')">${leadCb(l)}<div class="m"><div><b>${esc(l.name)}</b></div><small>${esc(l.nextAction || '다음 액션 미입력')}${l.phone ? ' · ' + esc(l.phone) : ''}</small></div>${leadDateBadge(l)}</div>`).join('')}</div>` : '<div class="empty">연락할 리드가 없습니다.</div>'}</div>
     <p style="margin-top:14px"><button class="btn pri" style="width:100%" onclick="openLead()">+ 새 영업 리드 입력</button></p>`;
 };
 views.more = () => `<div class="head"><h1>더보기</h1></div><div class="morelist">
