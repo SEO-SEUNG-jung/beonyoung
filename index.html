@@ -653,8 +653,8 @@ views.dashboard = () => {
     <div class="tw" id="dmTable"></div>
   </div>
   <div class="grid g2 mb">
-    <div class="card"><h2>연도별 수수료 추이 <span class="note">수임연도 기준 · VAT 제외</span></h2><div class="chart" id="chYear"></div></div>
-    <div class="card"><h2>연도별 입금액 추이 <span class="note">입금연도 기준 · VAT 제외</span></h2><div class="chart" id="chYearPaid"></div></div>
+    <div class="card"><h2>연도별 수수료 추이 <span class="note">수임연도 기준 · VAT 포함</span></h2><div class="chart" id="chYear"></div></div>
+    <div class="card"><h2>연도별 입금액 추이 <span class="note">입금연도 기준 · VAT 포함</span></h2><div class="chart" id="chYearPaid"></div></div>
   </div>`;
 };
 // 다음 할 일 완료 → 진행일지에 기록하고 할 일·기한을 비움 (사건 상세와 대시보드에서 공용)
@@ -717,8 +717,8 @@ views.dashboard.after = () => {
   $('#dmYear').addEventListener('change', e => { DM.year = +e.target.value; drawDM(); });
   $('#dmVat').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; DM.vat = k === '1'; document.querySelectorAll('#dmVat button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); drawDM(); });
   const st = ys.map(y => yearStats(y));
-  barChart($('#chYear'), { labels: ys.map(y => y + ''), series: [{ name: '수수료', color: cssVar('--s1'), values: st.map(s => s.fee) }], valueLabels: st.map((_, i) => i) });
-  barChart($('#chYearPaid'), { labels: ys.map(y => y + ''), series: [{ name: '입금액', color: cssVar('--s2'), values: st.map(s => s.paidBasis) }], valueLabels: st.map((_, i) => i) });
+  barChart($('#chYear'), { labels: ys.map(y => y + ''), series: [{ name: '수수료(VAT 포함)', color: cssVar('--s1'), values: st.map(s => s.total) }], valueLabels: st.map((_, i) => i) });
+  barChart($('#chYearPaid'), { labels: ys.map(y => y + ''), series: [{ name: '입금액(VAT 포함)', color: cssVar('--s2'), values: ys.map(y => monthly(y, 'paid', true).reduce((a, b) => a + b, 0)) }], valueLabels: st.map((_, i) => i) });
 };
 function goStage(tr, st) { F = { ...F, status: 'open', track: tr, stage: st, year: 'all' }; location.hash = '#cases'; }
 
