@@ -599,7 +599,7 @@ function kpiHtml() {
   if (!all && y === Y) {
     const M = Math.max(1, now.getMonth()), a = monthly(Y).slice(0, M).reduce((p, q) => p + q, 0), b = monthly(Y - 1).slice(0, M).reduce((p, q) => p + q, 0);
     if (b) feeCmp = ` · 전년 동기 ${arrow(a - b)} ${pct(Math.abs(a / b - 1))}</span>`;
-  } else if (!all) { const p = yearStats(y - 1).fee; if (p) feeCmp = ` · 전년 대비 ${arrow(fee - p)} ${pct(Math.abs(fee / p - 1))}</span>`; }
+  } else if (!all) { const p = yearStats(y - 1).total; if (p) feeCmp = ` · 전년 대비 ${arrow(total - p)} ${pct(Math.abs(total / p - 1))}</span>`; } // 비교도 VAT 포함
   // 입금액: 입금연도 기준
   let paidFee = 0, paidTot = 0, paidN = 0;
   for (const c of S.cases) for (const b of c.billings) if (b.paidDate && (all || +b.paidDate.slice(0, 4) === y) && billTotal(b)) { paidFee += b.fee; paidTot += billTotal(b); paidN++; }
@@ -612,9 +612,9 @@ function kpiHtml() {
   const open = cs.filter(isOpen), dueSoon = open.filter(c => { const d = firstTodo(c)?.due; return d && days(todayStr(), d) <= 7; }).length;
   const L = all ? '전체' : `${y}년`;
   return `<div class="kpis k5">
-    <div class="kpi"><div class="l">${L} 수임액 총액</div><div class="v">${short(fee)}</div><div class="s">VAT 포함 ${short(total)}${feeCmp}</div></div>
-    <div class="kpi"><div class="l">${L} 입금액 총액</div><div class="v">${short(paidFee)}</div><div class="s">VAT 포함 ${short(paidTot)} · ${paidN}건 입금</div></div>
-    <div class="kpi"><div class="l">${all ? '' : L + ' 수임 '}수금 예정 (미입금)</div><div class="v">${short(unpaid)}</div><div class="s">VAT 포함 ${short(ub.reduce((a, x) => a + billTotal(x.b), 0))} · 예상 ${ub.filter(x => !isConfirmed(x.b)).length}건 · 확정 ${ub.filter(x => isConfirmed(x.b)).length}건${longN ? ` · <span class="down">확정 후 장기 ${longN}건</span>` : ''}</div></div>
+    <div class="kpi"><div class="l">${L} 수임액 총액 <span class="muted">(VAT 포함)</span></div><div class="v">${short(total)}</div><div class="s">VAT 제외 ${short(fee)}${feeCmp}</div></div>
+    <div class="kpi"><div class="l">${L} 입금액 총액 <span class="muted">(VAT 포함)</span></div><div class="v">${short(paidTot)}</div><div class="s">VAT 제외 ${short(paidFee)} · ${paidN}건 입금</div></div>
+    <div class="kpi"><div class="l">${all ? '' : L + ' 수임 '}수금 예정 (미입금, VAT 포함)</div><div class="v">${short(ub.reduce((a, x) => a + billTotal(x.b), 0))}</div><div class="s">VAT 제외 ${short(unpaid)} · 예상 ${ub.filter(x => !isConfirmed(x.b)).length}건 · 확정 ${ub.filter(x => isConfirmed(x.b)).length}건${longN ? ` · <span class="down">확정 후 장기 ${longN}건</span>` : ''}</div></div>
     <div class="kpi"><div class="l">${L} 수임 총건수</div><div class="v">${cs.length}건</div><div class="s">${cntCmp}</div></div>
     <div class="kpi"><div class="l">${all ? '' : L + ' 수임 '}미결 사건</div><div class="v">${open.length}건</div><div class="s">${dueSoon ? `<span class="down">기한 임박·초과 ${dueSoon}건</span>` : '기한 임박 없음'}</div></div>
   </div>`;
@@ -628,7 +628,7 @@ views.dashboard = () => {
   const backupOld = SYNC.state === 'off' && (!S.meta.lastBackup || days(S.meta.lastBackup, todayStr()) > 7); // OneDrive 동기화 중이면 안내 생략
   return `
   ${backupOld ? `<div class="banner">⚠ <span>${S.meta.lastBackup ? `마지막 백업이 ${days(S.meta.lastBackup, todayStr())}일 전입니다.` : '아직 백업 파일을 만든 적이 없습니다.'} 데이터는 이 브라우저에 저장되므로 주기적으로 백업해 주세요.</span><span class="sp"></span><button class="btn sm" onclick="exportJSON()">지금 백업</button></div>` : ''}
-  <div class="head"><h1>경영 대시보드</h1><span class="sub">기준일 ${todayStr()} · 금액은 부가세 제외(별도 표시 제외)</span><span class="sp"></span><button class="btn pri" onclick="openCase()">+ 새 사건 수임</button></div>
+  <div class="head"><h1>경영 대시보드</h1><span class="sub">기준일 ${todayStr()} · 금액은 VAT 포함(수수료+부가세+기타, 월별 표는 선택)</span><span class="sp"></span><button class="btn pri" onclick="openCase()">+ 새 사건 수임</button></div>
   <div class="filters" style="margin-bottom:10px"><select id="kpiYear"><option value="all" ${KY === 'all' ? 'selected' : ''}>전체 연도</option>${years().slice().reverse().map(y => `<option value="${y}" ${KY == y ? 'selected' : ''}>${y}년</option>`).join('')}</select><span class="muted" style="font-size:12.5px">윗줄 숫자의 기준 연도 · 수임액·건수·수금 예정·미결은 수임연도, 입금액은 입금연도 기준</span></div>
   <div id="kpiRow">${kpiHtml()}</div>
   <div class="card mb"><h2>진행 단계별 사건 <span class="note"><a href="#cases" onclick="F={...F,status:'open',year:'all',track:'',stage:'',q:''}">서류 미접수 ${open.filter(recvMissing).length}건 →</a> · 클릭하면 해당 사건 목록으로 이동</span></h2>
