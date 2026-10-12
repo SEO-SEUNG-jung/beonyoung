@@ -625,9 +625,11 @@ views.dashboard = () => {
   // 할 일 하나하나를 따로 (한 사건에 여러 개면 여러 줄), 기한 빠른 순
   const todo = open.flatMap(c => todosOf(c).map(t => ({ c, t }))).sort((a, b) => (a.t.due || '9999') < (b.t.due || '9999') ? -1 : (a.t.due || '9999') > (b.t.due || '9999') ? 1 : 0).slice(0, 10);
   const leadsToday = leadsOf().filter(l => leadOpen(l) && l.nextDate === todayStr()); // 다음 연락일이 오늘인 진행 중 리드 (할 일·기한 카드에 따로 표시)
-  const backupOld = SYNC.state === 'off' && (!S.meta.lastBackup || days(S.meta.lastBackup, todayStr()) > 7); // OneDrive 동기화 중이면 안내 생략
+  // OneDrive 연결 안 됨 안내: 연결 확인이 끝난 뒤(SYNC.checked)에만, 정말 연결이 없을 때만 보여 줌
+  const notLinked = SYNC.checked && SYNC.state === 'off' && !WEB;
+  const lastBk = S.meta.lastBackup ? `마지막 백업 ${days(S.meta.lastBackup, todayStr())}일 전` : '백업 파일 없음';
   return `
-  ${backupOld ? `<div class="banner">⚠ <span>${S.meta.lastBackup ? `마지막 백업이 ${days(S.meta.lastBackup, todayStr())}일 전입니다.` : '아직 백업 파일을 만든 적이 없습니다.'} 데이터는 이 브라우저에 저장되므로 주기적으로 백업해 주세요.</span><span class="sp"></span><button class="btn sm" onclick="exportJSON()">지금 백업</button></div>` : ''}
+  ${notLinked ? `<div class="banner crit">⚠ <span><b>OneDrive에 연결되어 있지 않습니다.</b> ${fsSupported() ? '지금 입력하는 내용은 <b>이 브라우저에만</b> 저장되고, 다른 PC·휴대폰·태블릿에는 넘어가지 않습니다.' : '이 브라우저에서는 OneDrive에 연결할 수 없습니다. <b>엣지(Edge)</b>로 열어 주세요.'} <span class="muted">(${lastBk})</span></span><span class="sp"></span>${fsSupported() ? '<button class="btn sm pri" onclick="connectFromBanner()">OneDrive 연결</button>' : ''}<button class="btn sm" onclick="exportJSON()">지금 백업</button></div>` : ''}
   <div class="head"><h1>경영 대시보드</h1><span class="sub">기준일 ${todayStr()} · 금액은 VAT 포함(수수료+부가세+기타, 월별 표는 선택)</span><span class="sp"></span><button class="btn pri" onclick="openCase()">+ 새 사건 수임</button></div>
   <div class="filters" style="margin-bottom:10px"><select id="kpiYear"><option value="all" ${KY === 'all' ? 'selected' : ''}>전체 연도</option>${years().slice().reverse().map(y => `<option value="${y}" ${KY == y ? 'selected' : ''}>${y}년</option>`).join('')}</select><span class="muted" style="font-size:12.5px">윗줄 숫자의 기준 연도 · 수임액·건수·수금 예정·미결은 수임연도, 입금액은 입금연도 기준</span></div>
   <div id="kpiRow">${kpiHtml()}</div>
@@ -1703,8 +1705,14 @@ function renderSyncUI() {
     : '';
 }
 async function initSync() {
-  if (WEB) return webInit();
+  if (WEB) { SYNC.checked = true; return webInit(); }
   renderSyncUI();
+  await initSyncCheck();
+  // 연결 확인이 끝난 뒤 대시보드를 다시 그림 (확인 전에 그린 화면은 "연결 안 됨"으로 잘못 보일 수 있음)
+  SYNC.checked = true;
+  if (!$('#dlg').open && (location.hash.slice(1) || 'dashboard') === 'dashboard') render();
+}
+async function initSyncCheck() {
   if (!fsSupported()) return;
   let h; try { h = await idbGet('handle'); } catch {}
   if (!h) return;
@@ -1713,6 +1721,11 @@ async function initSync() {
   SYNC.state = p === 'granted' ? 'ok' : 'need';
   renderSyncUI();
   if (SYNC.state === 'ok') syncTask(pullFromFile);
+}
+// 대시보드 안내 띠의 [OneDrive 연결] 버튼: 이 PC 이름이 없으면 설정에서 먼저 입력하게 하고, 있으면 바로 파일 선택 창
+function connectFromBanner() {
+  if (!pcName()) { location.hash = '#settings'; setTimeout(() => $('#pcName')?.focus(), 100); toast('먼저 “이 PC 이름”(예: 사무실, 노트북)을 입력한 뒤 [기존 데이터 파일 열기]를 눌러 주세요'); return; }
+  syncOpenFile();
 }
 // 30초마다, 그리고 이 창으로 돌아올 때 다른 PC의 저장 여부 확인
 setInterval(() => { if (document.visibilityState === 'visible' && SYNC.state === 'ok') syncTask(pullFromFile); }, 30000);
