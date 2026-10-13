@@ -364,7 +364,8 @@ function fromSeed() {
 }
 function migrate() {
   const v = S.version || 1;
-  if (v >= 8) return false;
+  if (v >= 9) return false;
+  if (v === 8) return migrateV9();
   if (v === 7) return migrateV8();
   if (v === 6) return migrateV7();
   if (v === 5) return migrateV6();
@@ -422,7 +423,13 @@ function migrateV8() {
   // 수임 성공 리드는 이름이 같은 사건(사건명 뒤에 "(선임권)" 등이 붙은 경우 포함)과 이어 둠
   if (!Array.isArray(S.leads)) S.leads = NOTION_LEADS.map(l => ({ id: uid(), nextDate: '', memo: '', ...l,
     caseId: l.stage === '수임 성공' ? S.cases.find(c => c.name.replace(/\s/g, '').startsWith(l.name.replace(/\s/g, '')))?.id || '' : '' }));
-  S.version = 8; return true;
+  S.version = 8; return migrateV9();
+}
+function migrateV9() {
+  // 2026-10-13 사용자 요청: 「공주 신관동 상가 화재」 계약 요율 7% → 8% (청구의 8%가 맞음). 그 사건이 아직 7%일 때만 바꿈(이미 고쳤으면 그대로)
+  const c = S.cases.find(x => x.id === 'mv4mvf5cc77rf1');
+  if (c && c.contract && Math.abs((+c.contract.rate || 0) - 0.07) < 1e-9) c.contract.rate = 0.08;
+  S.version = 9; return true;
 }
 const NOTION_LEADS = []; // 인터넷 버전: 고객 정보 제거
 function load() {
