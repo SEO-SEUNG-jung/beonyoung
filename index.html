@@ -1121,6 +1121,7 @@ function taxPlan() {
   recent.sort((a, b) => a.x.paidDate < b.x.paidDate ? 1 : -1);
   return { items, total, rate, autoRate, manual, base, payR, recent };
 }
+// (2026-10-18 사용자 요청으로 화면에서 뺌 — 다시 보이게 하려면 views.tax에 ${taxReserveCardHtml()}와 #taxSaved·#taxRate 입력 처리를 되돌림)
 function taxReserveCardHtml() {
   const P = taxPlan(), m = S.meta || {}, saved = m.taxSaved == null || m.taxSaved === '' ? null : +m.taxSaved, gap = saved == null ? null : saved - P.total;
   const due = d => { const n = days(todayStr(), d); return `${fmtDate(d)} <span class="muted">(${n}일 남음)</span>`; };
@@ -1160,7 +1161,6 @@ views.tax = () => {
     <td class="nowrap acts">${halfRange(t) ? `<button class="btn sm" data-alloc="${t.id}" title="지출부가세는 이 기간 입금분에, 소득세(연간)는 그 해 입금분 전체에 비율대로 배분">사건별 배분</button>` : ''} <button class="btn sm dan" data-del="${t.id}">삭제</button></td></tr>`;
   }).join('');
   return `<div class="head"><h1>부가세 · 소득세</h1><span class="sub">반기별 신고 내역 · 셀을 클릭해 바로 수정</span><span class="sp"></span><button class="btn pri" id="taxAdd">+ 신고 기간 추가</button></div>
-  ${taxReserveCardHtml()}
   <div class="card mb" style="padding:0"><div class="tw"><table class="t taxt"><thead><tr><th>연도</th><th>구분</th><th class="r">매출세액</th><th class="r">예정(예상 종결)</th><th class="r">지출부가세</th><th class="r">지출율</th><th class="r">이득 부가세</th><th class="r">환급율</th><th class="r">소득세</th><th></th></tr></thead><tbody>${body}</tbody>
   <tfoot><tr><td colspan="2">합계</td><td class="r">${won(tS)}</td><td></td><td class="r">${won(tE)}</td><td class="r">${tS ? pct(tE / tS) : '-'}</td><td class="r">${won(tS - tE)}</td><td></td><td class="r">${won(tI)}</td><td></td></tr></tfoot></table></div></div>
   ${taxExpectedCardHtml()}
@@ -1173,8 +1173,6 @@ views.tax = () => {
 };
 views.tax.after = () => {
   const tb = document.querySelector('.taxt tbody'); // 위 「세금 적립」 카드에도 표가 있어서 신고표만 고름
-  $('#taxSaved').onchange = e => { const v = e.target.value.trim(); S.meta.taxSaved = v === '' ? null : num(v); S.meta.taxSavedAt = v === '' ? '' : todayStr(); save(); render(); };
-  $('#taxRate').onchange = e => { const v = e.target.value.trim(); S.meta.taxRate = v === '' ? null : num(v); save(); render(); };
   tb.addEventListener('change', e => {
     if (e.target.dataset.yeartax) { // 연간 소득세: 그 해 첫 줄에 저장하고 나머지 줄은 0
       const y = +e.target.dataset.yeartax, ys = S.tax.filter(t => +t.year === y).sort((a, b) => a.label > b.label ? 1 : -1);
