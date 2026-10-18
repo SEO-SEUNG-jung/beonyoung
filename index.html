@@ -957,12 +957,11 @@ function payDialog(cid, bid) {
 
 let RF = { q: '', year: 'all', status: 'all', track: '', stage: '', basis: 'accept', vat: true };
 views.revenue = () => `<div class="head"><h1>매출 현황</h1><span class="sub">연도별 실적 · 월별 매출 · 동기 비교</span></div>
-  ${filterBarHtml(RF)}
   <div id="revBody"></div>`;
-function revCases() { return filterCases({ ...RF, year: 'all' }).map(x => x.c); } // 연도는 표시 범위로만 사용 (입금연도·전년 비교 때문에)
+function revCases() { return S.cases; } // 매출 현황은 필터 막대 없이 항상 전체 연도·전체 사건 (2026-10-18 사용자 요청)
 function renderRevenue() {
   const cases = revCases();
-  const allYs = years(), ys = RF.year === 'all' ? allYs : [+RF.year];
+  const allYs = years(), ys = allYs;
   const stAll = allYs.map(y => yearStats(y, cases)), st = stAll.filter(s => ys.includes(s.y));
   const Y = new Date().getFullYear(), M = Math.max(1, new Date().getMonth());
   const mats = ys.map(y => monthly(y, RF.basis, RF.vat, cases));
@@ -990,8 +989,8 @@ function renderRevenue() {
   $('#rbasis').addEventListener('click', e => { if (e.target.dataset.k) { RF.basis = e.target.dataset.k; renderRevenue(); } });
   $('#rvat').addEventListener('click', e => { if (e.target.dataset.k) { RF.vat = e.target.dataset.k === '1'; renderRevenue(); } });
 }
-views.revenue.after = () => { renderRevenue(); bindFilterBar(RF, renderRevenue); };
-// 매출 현황 1·2번 표의 건수를 누르면 그 연도 사건 목록 (2026-10-18 사용자 요청). 위 필터 막대(구분·종결/미결·단계·검색)가 걸린 사건만 — 표의 건수와 같음
+views.revenue.after = () => { renderRevenue(); };
+// 매출 현황 1·2번 표의 건수를 누르면 그 연도 사건 목록 (2026-10-18 사용자 요청). 전체 사건 기준 — 표의 건수와 같음
 // basis 'accept' = 수임연도가 y인 사건(1번 「수임 건수」), 'paid' = 입금일이 y년인 청구(2번 「입금 건수」, 청구 단위)
 function showYearCases(y, basis) {
   const cases = revCases(), acc = basis === 'accept';
@@ -1008,7 +1007,7 @@ function showYearCases(y, basis) {
   EDIT = null; LEDIT = null; QLOG = null;
   $('#dlg').innerHTML = `<div class="dlg-h"><h3>${y}년 ${acc ? '수임 사건' : '입금 내역'} <span class="muted" style="font-weight:400;font-size:13px">${acc ? '수임연도 기준' : '입금일 기준 · 청구 단위'} · ${rows.length}건</span></h3><button class="btn sm" onclick="$('#dlg').close()" aria-label="닫기">✕</button></div>
   <div class="dlg-b">
-    <p class="ink2" style="font-size:13px">${acc ? `<b>${y}년에 수임한 사건</b>입니다.` : `<b>${y}년에 입금된 청구</b>입니다(한 사건에 입금이 두 번이면 두 줄).`} 사건명을 누르면 사건 상세가 열립니다.${RF.track || RF.status !== 'all' || RF.stage || RF.q ? ' <span class="badge warn">위 필터가 적용된 목록</span>' : ''}</p>
+    <p class="ink2" style="font-size:13px">${acc ? `<b>${y}년에 수임한 사건</b>입니다.` : `<b>${y}년에 입금된 청구</b>입니다(한 사건에 입금이 두 번이면 두 줄).`} 사건명을 누르면 사건 상세가 열립니다.</p>
     ${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>수임일</th><th>계약자 / 사건명</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">기타</th><th class="r">입금액${sub('VAT포함')}</th><th class="r">지출부가세${sub('배분')}</th><th class="r">소득세${sub('배분')}</th><th class="r">미입금</th></tr></thead><tbody>
       ${rows.map(x => `<tr><td class="nowrap">${fmtDate(x.c.acceptDate) || '<span class="muted">-</span>'}</td><td>${link(x.c)}${acc ? '' : `<br><span class="muted" style="font-size:12px">${fmtDate(x.key)} 입금</span>`}</td>${K.map(k => cell(x[k], k === 'paid')).join('')}</tr>`).join('')}
     </tbody><tfoot><tr><td colspan="2">합계 ${rows.length}건</td>${K.map(k => `<td class="r">${won(tot(k))}</td>`).join('')}</tr></tfoot></table></div>
