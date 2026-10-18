@@ -1017,6 +1017,25 @@ function showAutoDetail(t) {
   <div class="dlg-f"><span class="sp"></span><button class="btn" onclick="$('#dlg').close()">닫기</button></div>`;
   const d = $('#dlg'); if (!d.open) d.showModal();
 }
+// 예정(예상 종결) 금액을 누르면: 아직 입금 안 된 미결 사건 중 예상 종결년월이 이 기간인 청구 목록 (expectedVat와 같은 기준)
+function showExpectedDetail(t) {
+  const r = halfRange(t); if (!r) return;
+  const from = r[0].slice(0, 7), to = r[1].slice(0, 7);
+  const rows = unpaidBills().filter(x => isOpen(x.c) && x.c.expectedClose && x.c.expectedClose >= from && x.c.expectedClose <= to)
+    .sort((a, b) => a.c.expectedClose < b.c.expectedClose ? -1 : a.c.expectedClose > b.c.expectedClose ? 1 : 0);
+  const s = f => rows.reduce((a, x) => a + (f(x.b) || 0), 0);
+  EDIT = null; LEDIT = null; QLOG = null;
+  $('#dlg').innerHTML = `<div class="dlg-h"><h3>${t.year}년 ${esc(t.label)} 예정 매출세액 내역 <span class="muted" style="font-weight:400;font-size:13px">예상 종결 ${+from.slice(5)}월 ~ ${+to.slice(5)}월</span></h3><button class="btn sm" onclick="$('#dlg').close()" aria-label="닫기">✕</button></div>
+  <div class="dlg-b">
+    <p class="ink2" style="font-size:13px">아직 입금되지 않은 <b>미결 사건</b> 중 <b>예상 종결년월</b>이 이 기간인 청구 <b>${rows.length}건</b>입니다. 사건명을 누르면 사건 상세가 열립니다.</p>
+    ${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th>계약자 / 사건명</th><th>진행 단계</th><th>수수료</th><th class="r">수수료 금액</th><th class="r">부가세</th><th class="r">청구액<br><span class="muted" style="font-weight:400">(VAT포함)</span></th></tr></thead><tbody>
+      ${rows.map(({ c, b }) => `<tr><td class="nowrap">${expectedCloseHtml(c)}</td><td><a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a></td><td>${esc(c.stage || '단계 미지정')}</td><td>${feeKind(b)}</td><td class="r">${won(b.fee)}</td><td class="r">${b.vat ? won(b.vat) : '<span class="muted">0</span>'}</td><td class="r">${won(billTotal(b))}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="4">합계</td><td class="r">${won(s(b => b.fee))}</td><td class="r">${won(s(b => b.vat))}</td><td class="r">${won(s(billTotal))}</td></tr></tfoot></table></div>` : '<div class="empty">해당하는 미결 사건이 없습니다.</div>'}
+    <p class="muted" style="font-size:12px;margin:8px 0 0">예상 수수료는 종결 때 확정 수수료로 바뀌므로 실제 매출세액과 다를 수 있습니다. 사건의 예상 종결년월을 고치면 이 목록도 바뀝니다.</p>
+  </div>
+  <div class="dlg-f"><span class="sp"></span><button class="btn" onclick="$('#dlg').close()">닫기</button></div>`;
+  const d = $('#dlg'); if (!d.open) d.showModal();
+}
 // 신고표의 매출세액: 입금일 기준 자동집계(기간을 알 수 있는 구분이면), 아니면 예전에 입력한 값 (2026-10-18 사용자 요청으로 입력 칸 없앰)
 const salesOf = t => { const a = autoVat(t); return a == null ? (+t.salesVat || 0) : a; };
 function autoVat(t) {
@@ -1123,16 +1142,16 @@ views.tax = () => {
     const firstOfYear = i === 0 || rows[i - 1].year !== t.year;
     const sv = salesOf(t), gain = sv - t.expVat; tS += sv; tE += t.expVat; tI += t.incomeTax; const av = autoVat(t), ev = expectedVat(t);
     return `<tr data-id="${t.id}"><td><input class="cell" style="text-align:left;width:64px" data-f="year" value="${t.year}"></td><td><input class="cell" style="text-align:left;width:90px" data-f="label" value="${esc(t.label)}"></td>
-    <td class="r" title="입금일 기준 자동 집계 · 누르면 집계 내역">${av == null ? won(sv) : `<a href="#" data-autodetail="${t.id}">${won(av)}</a>`}</td><td class="r" title="미결 사건 중 예상 종결이 이 반기인 건의 부가세">${ev ? won(ev) : '<span class="muted">-</span>'}</td>
+    <td class="r" title="입금일 기준 자동 집계 · 누르면 집계 내역">${av == null ? won(sv) : `<a href="#" data-autodetail="${t.id}">${won(av)}</a>`}</td><td class="r" title="미결 사건 중 예상 종결이 이 기간인 건의 부가세 · 누르면 내역">${ev ? `<a href="#" data-expdetail="${t.id}">${won(ev)}</a>` : '<span class="muted">-</span>'}</td>
     <td class="r"><input class="cell" data-f="expVat" value="${won(t.expVat)}"></td><td class="r">${sv ? pct(t.expVat / sv) : '-'}</td>
     <td class="r"><b>${won(gain)}</b></td><td class="r">${sv ? pct(gain / sv) : '-'}</td>
-    ${firstOfYear ? `<td class="r" rowspan="${yCount[t.year]}" style="vertical-align:middle;${yCount[t.year] > 1 ? 'border-left:1px solid var(--line);border-right:1px solid var(--line)' : ''}" title="${t.year}년 소득분 종합소득세(다음 해 5월 납부) · 연간 한 번"><input class="cell" data-yeartax="${t.year}" value="${won(yTax[t.year])}">${yCount[t.year] > 1 ? `<div class="muted" style="font-size:11px">${t.year}년 연간</div>` : ''}</td>` : ''}<td><input class="cell" style="text-align:left;min-width:120px" data-f="memo" value="${esc(t.memo)}" placeholder="메모"></td>
+    ${firstOfYear ? `<td class="r" rowspan="${yCount[t.year]}" style="vertical-align:middle;${yCount[t.year] > 1 ? 'border-left:1px solid var(--line);border-right:1px solid var(--line)' : ''}" title="${t.year}년 소득분 종합소득세(다음 해 5월 납부) · 연간 한 번"><input class="cell" data-yeartax="${t.year}" value="${won(yTax[t.year])}">${yCount[t.year] > 1 ? `<div class="muted" style="font-size:11px">${t.year}년 연간</div>` : ''}</td>` : ''}
     <td class="nowrap acts">${halfRange(t) ? `<button class="btn sm" data-alloc="${t.id}" title="지출부가세는 이 기간 입금분에, 소득세(연간)는 그 해 입금분 전체에 비율대로 배분">사건별 배분</button>` : ''} <button class="btn sm dan" data-del="${t.id}">삭제</button></td></tr>`;
   }).join('');
   return `<div class="head"><h1>부가세 · 소득세</h1><span class="sub">반기별 신고 내역 · 셀을 클릭해 바로 수정</span><span class="sp"></span><button class="btn pri" id="taxAdd">+ 신고 기간 추가</button></div>
   ${taxReserveCardHtml()}
-  <div class="card mb" style="padding:0"><div class="tw"><table class="t taxt"><thead><tr><th>연도</th><th>구분</th><th class="r">매출세액</th><th class="r">예정(예상 종결)</th><th class="r">지출부가세</th><th class="r">지출율</th><th class="r">이득 부가세</th><th class="r">환급율</th><th class="r">소득세</th><th>메모</th><th></th></tr></thead><tbody>${body}</tbody>
-  <tfoot><tr><td colspan="2">합계</td><td class="r">${won(tS)}</td><td></td><td class="r">${won(tE)}</td><td class="r">${tS ? pct(tE / tS) : '-'}</td><td class="r">${won(tS - tE)}</td><td></td><td class="r">${won(tI)}</td><td colspan="2"></td></tr></tfoot></table></div></div>
+  <div class="card mb" style="padding:0"><div class="tw"><table class="t taxt"><thead><tr><th>연도</th><th>구분</th><th class="r">매출세액</th><th class="r">예정(예상 종결)</th><th class="r">지출부가세</th><th class="r">지출율</th><th class="r">이득 부가세</th><th class="r">환급율</th><th class="r">소득세</th><th></th></tr></thead><tbody>${body}</tbody>
+  <tfoot><tr><td colspan="2">합계</td><td class="r">${won(tS)}</td><td></td><td class="r">${won(tE)}</td><td class="r">${tS ? pct(tE / tS) : '-'}</td><td class="r">${won(tS - tE)}</td><td></td><td class="r">${won(tI)}</td><td></td></tr></tfoot></table></div></div>
   ${taxExpectedCardHtml()}
   <div class="card"><h2>사용 안내</h2><ul class="ink2" style="margin:0;padding-left:18px;font-size:13px">
     <li><b>매출세액</b>은 해당 기간에 <b>입금된 사건의 부가세 합계</b>로 자동 계산됩니다. <b>금액을 누르면 집계 내역</b>(입금일·사건·부가세·배분)을 볼 수 있습니다. 구분이 ‘상반기’(1~6월)·‘후반기’(7~12월)일 때, 숫자를 붙인 ‘상반기1’(1~3월)·‘상반기2’(4~6월)·‘후반기1’(7~9월)·‘후반기2’(10~12월)일 때 계산합니다.</li>
@@ -1155,6 +1174,7 @@ views.tax.after = () => {
   });
   tb.addEventListener('click', e => {
     const ad = e.target.closest('[data-autodetail]'); if (ad) { e.preventDefault(); showAutoDetail(S.tax.find(x => x.id === ad.dataset.autodetail)); return; }
+    const xd = e.target.closest('[data-expdetail]'); if (xd) { e.preventDefault(); showExpectedDetail(S.tax.find(x => x.id === xd.dataset.expdetail)); return; }
     const del = e.target.dataset.del, al = e.target.dataset.alloc;
     if (del && confirm('이 신고 기간을 삭제할까요?')) { S.tax = S.tax.filter(x => x.id !== del); save(); render(); }
     if (al) allocate(S.tax.find(x => x.id === al));
