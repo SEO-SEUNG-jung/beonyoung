@@ -364,7 +364,8 @@ function fromSeed() {
 }
 function migrate() {
   const v = S.version || 1;
-  if (v >= 12) return false;
+  if (v >= 13) return false;
+  if (v === 12) return migrateV13();
   if (v === 11) return migrateV12();
   if (v === 10) return migrateV11();
   if (v === 9) return migrateV10();
@@ -478,7 +479,17 @@ function migrateV12() {
       const big = ok.reduce((m, b) => billTotal(b) > billTotal(m) ? b : m, ok[0]); big.incomeTax += tax - ok.reduce((a, b) => a + b.incomeTax, 0);
     }
   }
-  S.version = 12; return true;
+  S.version = 12; return migrateV13();
+}
+function migrateV13() {
+  // 2026-10-18: 예전 [사건별 배분]은 연간 소득세가 0원이면 소득세 배분을 건드리지 않아, 시험으로 넣었다 지운 2026년 1,000만원 배분이 사건에 남아 있었음.
+  // 표의 연간 소득세가 0원인 연도는 그 해 입금 건의 소득세 배분을 모두 0원으로
+  const years = new Set(S.cases.flatMap(c => c.billings).filter(b => b.paidDate && b.incomeTax > 0).map(b => b.paidDate.slice(0, 4)));
+  for (const y of years) {
+    const tax = S.tax.filter(t => String(t.year) === y).reduce((a, t) => a + (+t.incomeTax || 0), 0);
+    if (!tax) for (const b of S.cases.flatMap(c => c.billings)) if (b.paidDate && b.paidDate.startsWith(y)) b.incomeTax = 0;
+  }
+  S.version = 13; return true;
 }
 const NOTION_LEADS = []; // 인터넷 버전: 고객 정보 제거
 function load() {
@@ -1189,16 +1200,18 @@ function allocate(t) {
     if (b.paidDate && b.paidDate.startsWith(String(y)) && (b.vat > 0 || b.taxInclude)) ybs.push(b); // 소득세는 부가세가 있는 건에만(사용자 결정 2026-10-18). taxInclude = 부가세 0원이어도 포함하는 예외 건
   }
   const yTax = S.tax.filter(x => +x.year === y).reduce((a, x) => a + (+x.incomeTax || 0), 0);
-  if (!bs.length && !(yTax && ybs.length)) return alert('이 기간에 입금된 사건이 없습니다.');
+  const yLeft = S.cases.flatMap(c => c.billings).filter(b => b.paidDate && b.paidDate.startsWith(String(y)) && b.incomeTax > 0); // 연간 소득세가 0인데 예전 배분이 남아 있으면 지움
+  if (!bs.length && !(yTax && ybs.length) && !(!yTax && yLeft.length)) return alert('이 기간에 입금된 사건이 없습니다.');
   const sv = bs.reduce((a, b) => a + b.vat, 0), st = ybs.reduce((a, b) => a + billTotal(b), 0);
-  if (!confirm(`${y}년 ${t.label} 사건별 배분\n\n· 지출부가세 ${won(t.expVat)}원 → 이 기간(${fmtDate(r[0])}~${fmtDate(r[1])}) 입금 ${bs.length}건에 (부가세 비율)${yTax ? `\n· 소득세(${y}년 연간) ${won(yTax)}원 → ${y}년 입금 중 부가세 있는 건${ybs.some(b => !(b.vat > 0)) ? `(예외 ${ybs.filter(b => !(b.vat > 0)).length}건 포함)` : ''} ${ybs.length}건에 (청구액 비율, 부가세 0원 건 제외)` : ''}\n\n기존 사건별 배분값을 덮어씁니다. 계속할까요?`)) return;
+  if (!confirm(`${y}년 ${t.label} 사건별 배분\n\n· 지출부가세 ${won(t.expVat)}원 → 이 기간(${fmtDate(r[0])}~${fmtDate(r[1])}) 입금 ${bs.length}건에 (부가세 비율)${yTax ? `\n· 소득세(${y}년 연간) ${won(yTax)}원 → ${y}년 입금 중 부가세 있는 건${ybs.some(b => !(b.vat > 0)) ? `(예외 ${ybs.filter(b => !(b.vat > 0)).length}건 포함)` : ''} ${ybs.length}건에 (청구액 비율, 부가세 0원 건 제외)` : yLeft.length ? `\n· 소득세(${y}년 연간) 0원 → ${y}년 입금 ${yLeft.length}건에 남아 있는 소득세 배분 ${won(yLeft.reduce((a, b) => a + b.incomeTax, 0))}원을 모두 0원으로` : ''}\n\n기존 사건별 배분값을 덮어씁니다. 계속할까요?`)) return;
   // 비율대로 나누고, 반올림으로 남는 몇 원은 가장 큰 건에 붙여 합계가 표 금액과 정확히 같게
   const split = (list, total, w, key) => { const W = list.reduce((a, b) => a + w(b), 0); if (!list.length) return;
     for (const b of list) b[key] = W ? Math.round(total * w(b) / W) : 0;
     if (W) { const big = list.reduce((m, b) => w(b) > w(m) ? b : m, list[0]); big[key] += total - list.reduce((a, b) => a + b[key], 0); } };
   split(bs, +t.expVat || 0, b => b.vat, 'expVat');
+  if (!yTax) for (const b of yLeft) b.incomeTax = 0; // 연간 소득세 0 → 배분도 0
   if (yTax) { split(ybs, yTax, billTotal, 'incomeTax'); for (const c of S.cases) for (const b of c.billings) if (b.paidDate && b.paidDate.startsWith(String(y)) && !(b.vat > 0) && !b.taxInclude) b.incomeTax = 0; } // 부가세 0원 건은 소득세 0 (예외 건 제외)
-  save(); toast(`배분했습니다 · 지출부가세 ${bs.length}건${yTax ? ` · 소득세 ${ybs.length}건` : ''}`);
+  save(); toast(`배분했습니다 · 지출부가세 ${bs.length}건${yTax ? ` · 소득세 ${ybs.length}건` : yLeft.length ? ` · 소득세 배분 ${yLeft.length}건 지움` : ''}`);
 }
 
 function syncCardHtml() {
