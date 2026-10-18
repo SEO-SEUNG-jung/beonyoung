@@ -585,6 +585,8 @@ function recvChips(c) {
   return `<span class="docs">${RECV.map(([k, l]) => { const v = !!c.recv?.[k]; return `<span class="${v ? 'ok' : open ? 'no' : ''}" title="${l}: ${v ? '접수' : '미접수'}">${v ? '✓' : '✕'} ${l.replace('정보공개위임장', '정보공개').replace('신분증사본', '신분증').replace('보험증권', '증권')}</span>`; }).join('')}</span>`;
 }
 // 예상 종결년월 표시: 미결 사건만, 이미 지난 달이면 경고
+// 종결 건의 종결일 = 마지막 입금일(종결 = 수수료 입금). 수임계약 관리 「예상 종결·종결일」 칸 (2026-10-18 사용자 요청)
+function closeDateHtml(c) { const d = sum(c).lastPaid; return d ? `${fmtDate(d)} <span class="muted" style="font-size:12px">종결</span>` : '<span class="muted">종결</span>'; }
 function expectedCloseHtml(c) {
   if (!isOpen(c)) return '<span class="muted">-</span>';
   if (!c.expectedClose) return '<span class="muted">미입력</span>';
@@ -882,12 +884,12 @@ function renderContractTable() {
   const rows = filterCases(CF).map(x => x.c);
   // 목록 제목을 눌러 정렬 (같은 제목을 다시 누르면 반대 순서)
   const val = c => ({ contractDate: c.contract.date || c.acceptDate || '', name: c.name, rate: c.contract.rate || 0, share: c.contract.share ?? 1, partner: c.contract.partner || '￿', insurer: c.insurer || '￿',
-    recv: RECV.filter(([k]) => c.recv?.[k]).length, file: c.contract.file ? 0 : isOpen(c) ? 1 : 2, track: c.track, stage: isOpen(c) ? stageIdx(c) / stagesOf(c).length : 2, expectedClose: isOpen(c) ? c.expectedClose || '9999' : '99999' })[CF.sort];
+    recv: RECV.filter(([k]) => c.recv?.[k]).length, file: c.contract.file ? 0 : isOpen(c) ? 1 : 2, track: c.track, stage: isOpen(c) ? stageIdx(c) / stagesOf(c).length : 2, expectedClose: isOpen(c) ? c.expectedClose || '9999' : 'Z' + (sum(c).lastPaid || '') })[CF.sort]; // 종결 건은 미결 뒤에 종결일 순
   rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * CF.dir; });
   const th = (k, l, cls = '') => `<th class="sort ${cls}" data-k="${k}">${l}${CF.sort === k ? (CF.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
   const avgRate = rows.filter(c => c.contract.rate > 0); const ar = avgRate.length ? avgRate.reduce((a, c) => a + c.contract.rate, 0) / avgRate.length : 0;
   $('#contractSum').innerHTML = `<span>계약 <b>${rows.length}</b>건</span><span>평균 계약요율 <b>${pct(ar)}</b></span><span>공동수임(지분 100% 미만) <b>${rows.filter(c => c.contract.share < 1).length}</b>건</span><span>계약서 첨부 <b>${rows.filter(c => c.contract.file).length}</b>건</span>`;
-  $('#contractTable').innerHTML = rows.length ? `<table class="t"><thead><tr>${th('contractDate', '계약일')}${th('name', '위임인 / 사건명')}${th('file', '계약서')}${th('rate', '계약요율', 'r')}${th('share', '지분', 'r')}${th('partner', '공동수임')}${th('insurer', '보험사')}${th('track', '구분')}${th('stage', '단계')}${th('expectedClose', '예상 종결')}</tr></thead><tbody>${rows.map(c => `<tr class="row" data-id="${c.id}"><td class="nowrap">${fmtDate(c.contract.date || c.acceptDate)}</td><td><b>${esc(c.name)}</b>${c.clientPhone ? `<div class="muted" style="font-size:12px">${esc(c.clientPhone)}</div>` : ''}</td><td class="nowrap">${contractFileCell(c)}</td><td class="r">${c.contract.rate ? pct(c.contract.rate) : '-'}</td><td class="r">${pct(c.contract.share ?? 1, 0)}</td><td>${esc(c.contract.partner) || '<span class="muted">-</span>'}</td><td>${esc(c.insurer) || '<span class="muted">-</span>'}</td><td>${trackBadge(c)}</td><td>${stageHtml(c)}</td><td class="nowrap">${expectedCloseHtml(c)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 계약이 없습니다.</div>';
+  $('#contractTable').innerHTML = rows.length ? `<table class="t"><thead><tr>${th('contractDate', '계약일')}${th('name', '위임인 / 사건명')}${th('file', '계약서')}${th('rate', '계약요율', 'r')}${th('share', '지분', 'r')}${th('partner', '공동수임')}${th('insurer', '보험사')}${th('track', '구분')}${th('stage', '단계')}${th('expectedClose', '예상 종결·종결일')}</tr></thead><tbody>${rows.map(c => `<tr class="row" data-id="${c.id}"><td class="nowrap">${fmtDate(c.contract.date || c.acceptDate)}</td><td><b>${esc(c.name)}</b>${c.clientPhone ? `<div class="muted" style="font-size:12px">${esc(c.clientPhone)}</div>` : ''}</td><td class="nowrap">${contractFileCell(c)}</td><td class="r">${c.contract.rate ? pct(c.contract.rate) : '-'}</td><td class="r">${pct(c.contract.share ?? 1, 0)}</td><td>${esc(c.contract.partner) || '<span class="muted">-</span>'}</td><td>${esc(c.insurer) || '<span class="muted">-</span>'}</td><td>${trackBadge(c)}</td><td>${stageHtml(c)}</td><td class="nowrap">${isOpen(c) ? expectedCloseHtml(c) : closeDateHtml(c)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">조건에 맞는 계약이 없습니다.</div>';
 }
 views.contracts.after = () => {
   renderContractTable();
