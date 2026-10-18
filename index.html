@@ -960,25 +960,12 @@ function renderRevenue() {
   <p class="muted" style="font-size:12px;margin:8px 0 0">순이익 = 수수료 + 부가세 − (지출부가세 + 소득세 + 경비) · 사건별로 입력된 값 기준</p></div>
   <div class="filters"><div class="seg" id="rbasis"><button data-k="accept" class="${RF.basis === 'accept' ? 'on' : ''}">수임월 기준</button><button data-k="paid" class="${RF.basis === 'paid' ? 'on' : ''}">입금월 기준</button></div>
   <div class="seg" id="rvat"><button data-k="1" class="${RF.vat ? 'on' : ''}">VAT 포함</button><button data-k="0" class="${!RF.vat ? 'on' : ''}">VAT 제외</button></div></div>
-  <div class="grid g-7-5 mb">
+  <div class="mb">
     <div class="card"><h2>2. 월별 매출 ${RF.basis === 'accept' ? '(수임월 기준)' : '(입금월 기준)'} <span class="note">${RF.vat ? 'VAT 포함' : 'VAT 제외'}</span></h2><div class="tw"><table class="t"><thead><tr><th>월</th>${ys.map(y => `<th class="r">${y}년</th>`).join('')}</tr></thead><tbody>${[...Array(12)].map((_, m) => `<tr><td>${m + 1}월</td>${mats.map((mm, i) => `<td class="r ${ys[i] === Y && m >= new Date().getMonth() + 1 ? 'muted' : ''}">${mm[m] ? won(mm[m]) : '<span class="muted">-</span>'}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><td>합계</td>${mats.map(mm => `<td class="r">${won(mm.reduce((a, b) => a + b, 0))}</td>`).join('')}</tr></tfoot></table></div></div>
-    <div class="card"><h2>3. 동기 누계 비교 <span class="note">1~${M}월 (전월까지)</span></h2>
-      <table class="t"><tbody>
-        <tr><td>${Y - 2}년 동기 누계</td><td class="r">${won(ppy)}</td></tr>
-        <tr><td>${Y - 1}년 동기 누계</td><td class="r">${won(py)}</td></tr>
-        <tr><td><b>${Y}년 동기 누계</b></td><td class="r"><b>${won(cy)}</b></td></tr>
-        <tr><td>${Y} vs ${Y - 1} 증감</td><td class="r"><span class="${cy >= py ? 'up' : 'down'}">${won(cy - py)} (${py ? (cy >= py ? '▲ ' : '▼ ') + pct(Math.abs(cy / py - 1)) : '-'})</span></td></tr>
-        <tr><td>${Y}년 연간 예상 <span class="muted">(누계÷${M}×12)</span></td><td class="r"><b>${won(cy / M * 12)}</b></td></tr>
-        <tr><td>${Y - 1}년 실적 (연간)</td><td class="r">${won(yearTotal(Y - 1))}</td></tr>
-      </tbody></table>
-      <p class="muted" style="font-size:12px">연간 예상은 계절성을 반영하지 않은 단순 환산 참고치입니다.</p>
-      <h2 style="margin-top:18px">${Y}년 월별 추이</h2>${legend([[Y + '년', 'var(--s1)'], [(Y - 1) + '년', 'var(--cmp)']])}<div class="chart" id="chRev"></div>
-    </div>
   </div>
   ${expectedCloseTableHtml(cases)}`;
   $('#rbasis').addEventListener('click', e => { if (e.target.dataset.k) { RF.basis = e.target.dataset.k; renderRevenue(); } });
   $('#rvat').addEventListener('click', e => { if (e.target.dataset.k) { RF.vat = e.target.dataset.k === '1'; renderRevenue(); } });
-  barChart($('#chRev'), { height: 200, labels: [...Array(12)].map((_, i) => (i + 1) + ''), series: [{ name: (Y - 1) + '년', color: cssVar('--cmp'), values: matOf(Y - 1) }, { name: Y + '년', color: cssVar('--s1'), values: matOf(Y) }] });
 }
 views.revenue.after = () => { renderRevenue(); bindFilterBar(RF, renderRevenue); };
 // 매출 현황 4번: 입금 전 금액을 예상 종결년월별로 (위 필터 적용)
@@ -995,7 +982,7 @@ function expectedCloseTableHtml(cases) {
   const label = r => r.k === 'done' ? '종결 · 입금 대기' : r.k === 'none' ? '미입력' : `${r.k.slice(0, 4)}년 ${+r.k.slice(5)}월`;
   const badge = r => r.k === 'none' ? ' <span class="badge warn">● 입력 필요</span>' : r.k !== 'done' && r.k < thisMonth ? ' <span class="badge crit">⚠ 지남</span>' : r.k === thisMonth ? ' <span class="badge acc">이번 달</span>' : '';
   const s = f => won(rows.reduce((a, r) => a + r[f], 0));
-  return `<div class="card"><h2>4. 예상 종결별 수금 예정 <span class="note">미입금 금액 · 사건의 예상 종결년월 기준 · 위 필터 적용</span></h2>${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th class="r">건수</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">청구액(VAT포함)</th><th>사건</th></tr></thead><tbody>${rows.map(r => `<tr><td class="nowrap"><b>${label(r)}</b>${badge(r)}</td><td class="r">${r.cases.size}</td><td class="r">${won(r.fee)}</td><td class="r">${won(r.vat)}</td><td class="r"><b>${won(r.total)}</b></td><td style="white-space:normal;min-width:260px">${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody><tfoot><tr><td>합계</td><td class="r">${rows.reduce((a, r) => a + r.cases.size, 0)}</td><td class="r">${s('fee')}</td><td class="r">${s('vat')}</td><td class="r">${s('total')}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">조건에 맞는 수금 예정 건이 없습니다.</div>'}</div>`;
+  return `<div class="card"><h2>3. 예상 종결별 수금 예정 <span class="note">미입금 금액 · 사건의 예상 종결년월 기준 · 위 필터 적용</span></h2>${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>예상 종결</th><th class="r">건수</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">청구액(VAT포함)</th><th>사건</th></tr></thead><tbody>${rows.map(r => `<tr><td class="nowrap"><b>${label(r)}</b>${badge(r)}</td><td class="r">${r.cases.size}</td><td class="r">${won(r.fee)}</td><td class="r">${won(r.vat)}</td><td class="r"><b>${won(r.total)}</b></td><td style="white-space:normal;min-width:260px">${[...r.cases.values()].map(c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody><tfoot><tr><td>합계</td><td class="r">${rows.reduce((a, r) => a + r.cases.size, 0)}</td><td class="r">${s('fee')}</td><td class="r">${s('vat')}</td><td class="r">${s('total')}</td><td></td></tr></tfoot></table></div>` : '<div class="empty">조건에 맞는 수금 예정 건이 없습니다.</div>'}</div>`;
 }
 
 function halfRange(t) { // 신고 기간 → 입금일 범위. 「상반기1·2」처럼 숫자를 붙이면 분기(3개월)로 나눔 (2025년이 상반기1=1~3월, 상반기2=4~6월)
