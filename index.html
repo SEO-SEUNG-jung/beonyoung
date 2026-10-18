@@ -354,7 +354,7 @@ function fromSeed() {
     const stage = r.closed && !unpaid ? DONE : unpaid ? '수수료 청구' : '현장조사';
     return {
       id: uid(), year: r.year, no: r.no, name: r.name || '', region: r.region || '', type: r.type || '',
-      acceptDate: r.acceptDate || '', accidentDate: '', insurer: '', insurerContact: '', clientPhone: '', address: '',
+      acceptDate: r.acceptDate || '', accidentDate: '', insurer: '', agency: '', staff: '', clientPhone: '', address: '',
       stage, nextAction: '', dueDate: '',
       contract: { date: r.acceptDate || '', rate: bills[0]?.rate || 0, share: bills[0]?.share ?? 1, partner: '', docs: {}, memo: '' },
       billings: bills, logs: [], memo: ''
@@ -364,7 +364,8 @@ function fromSeed() {
 }
 function migrate() {
   const v = S.version || 1;
-  if (v >= 13) return false;
+  if (v >= 14) return false;
+  if (v === 13) return migrateV14();
   if (v === 12) return migrateV13();
   if (v === 11) return migrateV12();
   if (v === 10) return migrateV11();
@@ -489,7 +490,13 @@ function migrateV13() {
     const tax = S.tax.filter(t => String(t.year) === y).reduce((a, t) => a + (+t.incomeTax || 0), 0);
     if (!tax) for (const b of S.cases.flatMap(c => c.billings)) if (b.paidDate && b.paidDate.startsWith(y)) b.incomeTax = 0;
   }
-  S.version = 13; return true;
+  S.version = 13; return migrateV14();
+}
+function migrateV14() {
+  // 2026-10-18 사용자 요청: 사건 상세의 「보험사 담당자·연락처」 칸을 없애고 「위탁업체」(agency)·「담당자」(staff) 칸으로 나눔.
+  // 예전 칸(insurerContact)에 적힌 값은 담당자 칸이 비어 있을 때 담당자로 옮기고 예전 칸은 지움(담당자에 이미 값이 있으면 예전 값은 그대로 둠)
+  for (const c of S.cases) { if (c.agency == null) c.agency = ''; if (c.staff == null) c.staff = ''; if (c.insurerContact) { if (!c.staff) { c.staff = c.insurerContact; delete c.insurerContact; } } else delete c.insurerContact; }
+  S.version = 14; return true;
 }
 const NOTION_LEADS = []; // 인터넷 버전: 고객 정보 제거
 function load() {
@@ -835,7 +842,7 @@ function filterCases(f) {
     if (f.track && c.track !== f.track) return false;
     if (f.year !== 'all' && caseYear(c) != f.year) return false;
     if (f.stage && (f.stage === '__none' ? stageIdx(c) >= 0 : c.stage !== f.stage)) return false;
-    if (q && ![c.name, c.region, c.type, c.insurer, c.memo, ...todosOf(c).map(t => t.text), c.address, c.contract?.partner, ...c.logs.map(l => l.text)].join(' ').toLowerCase().includes(q)) return false;
+    if (q && ![c.name, c.region, c.type, c.insurer, c.agency, c.staff, c.memo, ...todosOf(c).map(t => t.text), c.address, c.contract?.partner, ...c.logs.map(l => l.text)].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
 }
@@ -1578,7 +1585,7 @@ function openCase(id) {
   const src = id ? S.cases.find(c => c.id === id) : null;
   const y = new Date().getFullYear();
   EDIT = src ? JSON.parse(JSON.stringify(src)) : {
-    id: uid(), year: y, no: '', name: '', region: '', type: '화재', acceptDate: todayStr(), accidentDate: '', insurer: '', insurerContact: '', clientPhone: '', address: '',
+    id: uid(), year: y, no: '', name: '', region: '', type: '화재', acceptDate: todayStr(), accidentDate: '', insurer: '', agency: '', staff: '', clientPhone: '', address: '',
     track: '일반', stage: TRACKS['일반'][0], recv: { policy: false, infoPoa: false, idCopy: false }, nextAction: '', dueDate: '', todos: [], contract: { date: todayStr(), rate: 0.07, share: 1, partner: '', docs: { contract: false, poa: false, privacy: false }, memo: '' },
     billings: [blankBilling(0.07, 1)], logs: [], memo: '', _new: true
   };
@@ -1590,7 +1597,7 @@ function opts(list, v) { return list.map(x => `<option ${x === v ? 'selected' : 
 function drawCase() {
   const c = EDIT, s = sum(c);
   c.todos = todosOf(c); if (!c.todos.length) c.todos.push({ id: uid(), text: '', due: '' }); // 빈 줄 하나는 늘 보여 줌 (저장할 때 빈 줄은 빠짐)
-  const insurers = [...new Set(S.cases.map(x => x.insurer).filter(Boolean))];
+  const insurers = [...new Set(S.cases.map(x => x.insurer).filter(Boolean))], agencies = [...new Set(S.cases.map(x => x.agency).filter(Boolean))];
   const regions = [...new Set(S.cases.map(x => x.region).filter(Boolean))].sort();
   const types = [...new Set(['화재', '화재 대물', '대물', '수재', '감정', ...S.cases.map(x => x.type).filter(Boolean)])];
   const n = v => won(v);
@@ -1599,6 +1606,7 @@ function drawCase() {
     <datalist id="dl-region">${regions.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
     <datalist id="dl-type">${types.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
     <datalist id="dl-ins">${insurers.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
+    <datalist id="dl-agency">${agencies.map(r => `<option value="${esc(r)}">`).join('')}</datalist>
     <fieldset><legend>기본 정보</legend><div class="fg">
       <label class="w2">계약자 / 사건명 *<input data-f="name" value="${esc(c.name)}" placeholder="예: 대전 ○○아파트 화재" required></label>
       <label>진행 구분<select data-f="track">${opts(TRACK_NAMES, c.track)}</select></label>
@@ -1607,7 +1615,8 @@ function drawCase() {
       <label>수임일<input type="date" data-f="acceptDate" value="${c.acceptDate}"></label>
       <label>사고일<input type="date" data-f="accidentDate" value="${c.accidentDate || ''}"></label>
       <label>보험사<input data-f="insurer" list="dl-ins" value="${esc(c.insurer)}"></label>
-      <label>보험사 담당자·연락처<input data-f="insurerContact" value="${esc(c.insurerContact)}"></label>
+      <label>위탁업체<input data-f="agency" list="dl-agency" value="${esc(c.agency || '')}"></label>
+      <label>담당자<input data-f="staff" value="${esc(c.staff || '')}" placeholder="이름·직책·연락처"></label>
       <label>계약자 연락처<input data-f="clientPhone" value="${esc(c.clientPhone)}"></label>
       <label class="w2">사고 장소 / 주소<input data-f="address" value="${esc(c.address)}"></label>
       <label>순번(엑셀)<input data-f="no" value="${esc(c.no)}"></label>
