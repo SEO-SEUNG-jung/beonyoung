@@ -995,21 +995,24 @@ views.revenue.after = () => { renderRevenue(); bindFilterBar(RF, renderRevenue);
 // basis 'accept' = 수임연도가 y인 사건(1번 「수임 건수」), 'paid' = 입금일이 y년인 청구(2번 「입금 건수」, 청구 단위)
 function showYearCases(y, basis) {
   const cases = revCases(), acc = basis === 'accept';
-  const rows = acc ? cases.filter(c => caseYear(c) === y).map(c => ({ c, s: sum(c) })).sort((a, b) => String(a.c.acceptDate || '') < String(b.c.acceptDate || '') ? -1 : 1)
-    : cases.flatMap(c => c.billings.filter(b => b.paidDate && +b.paidDate.slice(0, 4) === y).map(b => ({ c, b }))).sort((a, b) => a.b.paidDate < b.b.paidDate ? -1 : 1);
+  // 한 줄 = 사건(1번: 그 사건의 청구 전체) 또는 청구 하나(2번). 칸 순서는 사용자 지정(2026-10-18): 수임일·사건명·수수료·부가세·기타·입금액(VAT포함)·지출부가세(배분)·소득세(배분)·미입금
+  const mk = (c, bs, key) => { const r = { c, key, fee: 0, vat: 0, extra: 0, paid: 0, expVat: 0, incomeTax: 0, unpaid: 0 };
+    for (const b of bs) { r.fee += b.fee || 0; r.vat += b.vat || 0; r.extra += b.extra || 0; r.expVat += b.expVat || 0; r.incomeTax += b.incomeTax || 0; if (b.paidDate) r.paid += billTotal(b); else r.unpaid += billTotal(b); }
+    return r; };
+  const rows = acc ? cases.filter(c => caseYear(c) === y).map(c => mk(c, c.billings, c.acceptDate || '')).sort((a, b) => a.key < b.key ? -1 : 1)
+    : cases.flatMap(c => c.billings.filter(b => b.paidDate && +b.paidDate.slice(0, 4) === y).map(b => mk(c, [b], b.paidDate))).sort((a, b) => a.key < b.key ? -1 : 1);
   const link = c => `<a href="#" onclick="openCase('${c.id}');return false">${esc(c.name)}</a>`;
-  const stg = c => isOpen(c) ? `<span class="badge">미결</span> ${esc(c.stage || '단계 미지정')}` : '<span class="badge good">종결</span>';
-  const T = acc ? rows.reduce((a, x) => a + x.s.total, 0) : rows.reduce((a, x) => a + billTotal(x.b), 0);
-  const C = acc ? rows.reduce((a, x) => a + x.s.claim, 0) : rows.reduce((a, x) => a + (x.b.claim || 0), 0);
+  const K = ['fee', 'vat', 'extra', 'paid', 'expVat', 'incomeTax', 'unpaid'], tot = k => rows.reduce((a, x) => a + x[k], 0);
+  const cell = (v, bold) => `<td class="r">${v ? (bold ? `<b>${won(v)}</b>` : won(v)) : '<span class="muted">-</span>'}</td>`;
+  const sub = t => `<br><span class="muted" style="font-weight:400">(${t})</span>`;
   EDIT = null; LEDIT = null; QLOG = null;
   $('#dlg').innerHTML = `<div class="dlg-h"><h3>${y}년 ${acc ? '수임 사건' : '입금 내역'} <span class="muted" style="font-weight:400;font-size:13px">${acc ? '수임연도 기준' : '입금일 기준 · 청구 단위'} · ${rows.length}건</span></h3><button class="btn sm" onclick="$('#dlg').close()" aria-label="닫기">✕</button></div>
   <div class="dlg-b">
     <p class="ink2" style="font-size:13px">${acc ? `<b>${y}년에 수임한 사건</b>입니다.` : `<b>${y}년에 입금된 청구</b>입니다(한 사건에 입금이 두 번이면 두 줄).`} 사건명을 누르면 사건 상세가 열립니다.${RF.track || RF.status !== 'all' || RF.stage || RF.q ? ' <span class="badge warn">위 필터가 적용된 목록</span>' : ''}</p>
-    ${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>${acc ? '수임일' : '입금일'}</th><th>계약자 / 사건명</th><th>${acc ? '상태' : '요율'}</th><th class="r">지급보험금</th><th class="r">${acc ? '수수료' : '입금액'}<br><span class="muted" style="font-weight:400">(VAT포함)</span></th>${acc ? '<th class="r">미입금</th>' : ''}</tr></thead><tbody>
-      ${rows.map(x => acc
-        ? `<tr><td class="nowrap">${fmtDate(x.c.acceptDate)}</td><td>${link(x.c)}</td><td>${stg(x.c)}</td><td class="r">${x.s.claim ? won(x.s.claim) : '<span class="muted">-</span>'}</td><td class="r">${won(x.s.total)}</td><td class="r">${x.s.unpaidTotal ? won(x.s.unpaidTotal) : '<span class="muted">-</span>'}</td></tr>`
-        : `<tr><td class="nowrap">${fmtDate(x.b.paidDate)}</td><td>${link(x.c)}</td><td>${x.b.rate ? pct(x.b.rate) : '<span class="muted">-</span>'}</td><td class="r">${x.b.claim ? won(x.b.claim) : '<span class="muted">-</span>'}</td><td class="r">${won(billTotal(x.b))}</td></tr>`).join('')}
-    </tbody><tfoot><tr><td colspan="3">합계 ${rows.length}건</td><td class="r">${won(C)}</td><td class="r">${won(T)}</td>${acc ? `<td class="r">${won(rows.reduce((a, x) => a + x.s.unpaidTotal, 0))}</td>` : ''}</tr></tfoot></table></div>` : '<div class="empty">해당하는 사건이 없습니다.</div>'}
+    ${rows.length ? `<div class="tw"><table class="t"><thead><tr><th>수임일</th><th>계약자 / 사건명</th><th class="r">수수료</th><th class="r">부가세</th><th class="r">기타</th><th class="r">입금액${sub('VAT포함')}</th><th class="r">지출부가세${sub('배분')}</th><th class="r">소득세${sub('배분')}</th><th class="r">미입금</th></tr></thead><tbody>
+      ${rows.map(x => `<tr><td class="nowrap">${fmtDate(x.c.acceptDate) || '<span class="muted">-</span>'}</td><td>${link(x.c)}${acc ? '' : `<br><span class="muted" style="font-size:12px">${fmtDate(x.key)} 입금</span>`}</td>${K.map(k => cell(x[k], k === 'paid')).join('')}</tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="2">합계 ${rows.length}건</td>${K.map(k => `<td class="r">${won(tot(k))}</td>`).join('')}</tr></tfoot></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">${acc ? '수수료·부가세·기타는 그 사건의 청구 전체, 입금액은 입금된 청구, 미입금은 아직 입금 안 된 청구(VAT 포함)' : '그 해에 입금된 청구만이라 미입금은 없음 · 사건명 아래에 입금일'} · 지출부가세·소득세(배분)는 부가세·소득세 탭 [사건별 배분] 값</p>` : '<div class="empty">해당하는 사건이 없습니다.</div>'}
   </div>
   <div class="dlg-f"><span class="sp"></span><button class="btn" onclick="$('#dlg').close()">닫기</button></div>`;
   const d = $('#dlg'); if (!d.open) d.showModal();
