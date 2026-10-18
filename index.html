@@ -292,9 +292,9 @@ table.dm-split tr:nth-child(4) th{padding-top:14px}
     <a href="#todos" data-v="todos" data-ic="✅" data-m="할 일" class="m-only">할 일 <span class="cnt" id="cnt-todo"></span></a>
     <a href="#leads" data-v="leads" data-ic="📰" data-m="리드">영업 리드 <span class="cnt" id="cnt-leads" title="진행 중인 리드"></span></a>
     <a href="#cases" data-v="cases" data-ic="📁" data-m="사건">사건 관리 <span class="cnt" id="cnt-open"></span></a>
+    <a href="#revenue" data-v="revenue" class="m-more">매출 현황</a>
     <a href="#contracts" data-v="contracts" class="m-more">수임계약 관리</a>
     <a href="#collect" data-v="collect" class="m-more">수금 관리 <span class="cnt" id="cnt-unpaid"></span></a>
-    <a href="#revenue" data-v="revenue" class="m-more">매출 현황</a>
     <a href="#tax" data-v="tax" class="m-more">부가세 · 소득세</a>
     <a href="#settings" data-v="settings" class="m-more">백업 · 설정</a>
     <a href="#more" data-v="more" data-ic="⋯" data-m="더보기" class="m-only">더보기</a>
@@ -1548,7 +1548,7 @@ views.todos.after = () => {
     <p style="margin-top:14px"><button class="btn pri" style="width:100%" onclick="openLead()">+ 새 영업 리드 입력</button></p>`;
 };
 views.more = () => `<div class="head"><h1>더보기</h1></div><div class="morelist">
-  ${[['contracts', '📝', '수임계약 관리', ''], ['collect', '💰', '수금 관리', unpaidBills().length], ['revenue', '📊', '매출 현황', ''], ['tax', '🧾', '부가세 · 소득세', ''], ['settings', '⚙️', '백업 · 설정', '']].map(([v, ic, l, n]) => `<a href="#${v}"><span style="font-size:22px">${ic}</span>${l}${n ? `<span class="cnt">${n}건</span>` : ''}</a>`).join('')}
+  ${[['revenue', '📊', '매출 현황', ''], ['contracts', '📝', '수임계약 관리', ''], ['collect', '💰', '수금 관리', unpaidBills().length], ['tax', '🧾', '부가세 · 소득세', ''], ['settings', '⚙️', '백업 · 설정', '']].map(([v, ic, l, n]) => `<a href="#${v}"><span style="font-size:22px">${ic}</span>${l}${n ? `<span class="cnt">${n}건</span>` : ''}</a>`).join('')}
   </div>`;
 // 진행일지 빠른 입력 (사건 상세를 열지 않고 날짜·내용만 적어 바로 저장)
 let QLOG = null;
