@@ -707,7 +707,7 @@ views.dashboard = () => {
   const open = S.cases.filter(isOpen);
   // 할 일 하나하나를 따로 (한 사건에 여러 개면 여러 줄), 기한 빠른 순
   const todo = open.flatMap(c => todosOf(c).map(t => ({ c, t }))).sort((a, b) => (a.t.due || '9999') < (b.t.due || '9999') ? -1 : (a.t.due || '9999') > (b.t.due || '9999') ? 1 : 0).slice(0, 10);
-  const leadsToday = leadsOf().filter(l => leadOpen(l) && l.nextDate === todayStr()); // 다음 연락일이 오늘인 진행 중 리드 (할 일·기한 카드에 따로 표시)
+  const leadsToday = leadsOf().filter(l => leadOpen(l) && l.nextDate).sort((a, b) => a.nextDate < b.nextDate ? -1 : a.nextDate > b.nextDate ? 1 : 0); // 다음 연락일이 적힌 진행 중 리드, 날짜 빠른 순 (할 일·기한 카드에 따로 표시, 2026-10-18부터 오늘만이 아니라 전부)
   // OneDrive 연결 안 됨 안내: 연결 확인이 끝난 뒤(SYNC.checked)에만, 정말 연결이 없을 때만 보여 줌
   const notLinked = SYNC.checked && SYNC.state === 'off' && !WEB;
   const lastBk = S.meta.lastBackup ? `마지막 백업 ${days(S.meta.lastBackup, todayStr())}일 전` : '백업 파일 없음';
@@ -723,7 +723,7 @@ views.dashboard = () => {
   <div class="grid g2 mb">
     <div class="card"><h2>할 일 · 기한 <span class="note">미결 사건의 다음 할 일</span></h2>
       <div class="list">${todo.length ? todo.map(({ c, t }) => `<div class="li" onclick="openCase('${c.id}')">${t.text ? `<input type="checkbox" class="todo-cb" title="완료 처리 (진행일지에 기록)" onclick="dashDone(event,'${c.id}','${t.id}')">` : '<span class="todo-cb"></span>'}<div class="m"><div><b>${esc(c.name)}</b></div><small>${esc(t.text || '다음 할 일 미입력')}${t.start ? ` · ${periodText(t)}` : ''} · ${esc(c.stage || '단계 미지정')}</small></div>${dueBadge(c, t)}</div>`).join('') : '<div class="empty">등록된 할 일이 없습니다. 사건 상세에서 “다음 할 일”과 기한을 입력하세요.</div>'}</div>
-      ${leadsToday.length ? `<div class="tgroup" style="margin-top:14px">📰 오늘 연락할 영업 리드 <span class="muted" style="font-weight:400">${leadsToday.length}건</span></div>
+      ${leadsToday.length ? `<div class="tgroup" style="margin-top:14px">📰 영업 리드 다음 액션 <span class="muted" style="font-weight:400">${leadsToday.length}건 · 연락일 빠른 순</span></div>
       <div class="list">${leadsToday.map(l => `<div class="li" onclick="openLead('${l.id}')">${leadCb(l)}<div class="m"><div><b>${esc(l.name)}</b></div><small>${esc(l.nextAction || '다음 액션 미입력')}${l.phone ? ' · ' + esc(l.phone) : ''} · ${esc(l.stage)}</small></div>${leadDateBadge(l)}</div>`).join('')}</div>` : ''}
     </div>
     <div class="card"><h2>월별 예상 수금 <span class="note">예상 종결년월 기준 · VAT 포함 · <a href="#collect">수금 관리 →</a></span></h2>
