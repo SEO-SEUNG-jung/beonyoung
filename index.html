@@ -779,10 +779,10 @@ function drawDM() {
   const sales = monthly(DM.year, 'accept', DM.vat), paid = monthly(DM.year, 'paid', DM.vat), t = a => a.reduce((x, y) => x + y, 0);
   const now = new Date(), future = m => DM.year > now.getFullYear() || (DM.year === now.getFullYear() && m > now.getMonth());
   const cell = (v, m) => `<td class="r ${future(m) ? 'muted' : ''}">${v ? won(v) : '<span class="muted">-</span>'}</td>`;
-  // 월평균: 다 지난 달만 평균 — 올해는 지난달까지(이번 달 제외), 개업 연도는 개업한 달부터
+  // 월평균: 올해는 이번 달까지(오늘이 속한 달 수로 나눔, 2026-10-18 사용자 요청), 개업 연도는 개업한 달부터
   const opened = S.cases.map(c => c.acceptDate).filter(Boolean).sort()[0] || '';
   const from = opened && +opened.slice(0, 4) === DM.year ? +opened.slice(5, 7) - 1 : 0; // 0부터 시작하는 월 번호
-  const to = DM.year < now.getFullYear() ? 12 : DM.year === now.getFullYear() ? now.getMonth() : 0; // 여기 전 달까지
+  const to = DM.year < now.getFullYear() ? 12 : DM.year === now.getFullYear() ? now.getMonth() + 1 : 0; // 여기 전 달까지(올해는 이번 달까지 포함)
   const nMonths = Math.max(0, to - from);
   const avg = vals => nMonths ? won(t(vals.slice(from, to)) / nMonths) : '<span class="muted">-</span>';
   const row = (name, vals) => `<tr><td><b>${name}</b></td>${vals.map(cell).join('')}<td class="r"><b>${won(t(vals))}</b></td><td class="r">${avg(vals)}</td></tr>`;
