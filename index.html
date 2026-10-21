@@ -305,6 +305,7 @@ table.dm-split tr:nth-child(4) th{padding-top:14px}
 </div>
 
 <dialog id="dlg"></dialog>
+<dialog id="dlg2"></dialog>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
 
@@ -1582,6 +1583,146 @@ $('#dlg').addEventListener('click', e => {
 $('#dlg').addEventListener('cancel', () => { QLOG = null; });
 document.addEventListener('click', e => { const b = e.target.closest('[data-qlog]'); if (b) { e.preventDefault(); e.stopPropagation(); quickLog(b.dataset.qlog); } }, true);
 
+const CLAIM_TPL = null; // 인터넷 버전: 직인이 든 양식 제거 (PC에서만 만듦)
+/* ---------- 손해사정보수청구서 (한글 hwpx) 만들기 — 2026-10-21 사용자 요청, PC에서만 ---------- */
+// 양식(CLAIM_TPL)의 바뀌는 칸에 {{이름}} 자리표시가 있고, 사건·청구 값으로 채워 새 hwpx(zip)로 묶는다.
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function deflateRaw(u8) { const cs = new CompressionStream('deflate-raw'); const w = cs.writable.getWriter(); w.write(u8); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
+async function makeZip(entries) { // [{ name, data, store }] — 한글 파일은 mimetype이 맨 앞(압축 안 함)
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  for (const e of entries) {
+    const nm = enc.encode(e.name), crc = crc32(e.data), comp = e.store ? e.data : await deflateRaw(e.data), method = e.store ? 0 : 8;
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, method, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, comp.length, true); h.setUint32(22, e.data.length, true); h.setUint16(26, nm.length, true);
+    parts.push(new Uint8Array(h.buffer), nm, comp);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, method, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, comp.length, true); c.setUint32(24, e.data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + comp.length;
+  }
+  const size = central.reduce((a, x) => a + x.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/haansofthwpx' });
+}
+const b64bytes = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
+// 금액 → 한글 (5,380,000 → 오백삼십팔만원)
+function wonWords(v) {
+  v = Math.floor(v); if (!v) return '영원';
+  const d = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'], small = ['', '십', '백', '천'], big = ['', '만', '억', '조'];
+  let out = '', g = 0;
+  while (v > 0) {
+    const part = v % 10000; v = Math.floor(v / 10000);
+    if (part) { let s = ''; for (let i = 3; i >= 0; i--) { const n = Math.floor(part / 10 ** i) % 10; if (n) s += (n === 1 && i > 0 ? '' : d[n]) + small[i]; } out = s + big[g] + out; }
+    g++;
+  }
+  return out + '원';
+}
+const rrn7 = s => { const x = String(s || '').replace(/\D/g, ''); return x.length >= 7 ? x.slice(0, 6) + '-' + x[6] : x; }; // 주민번호는 앞 7자리만 저장
+const spaced = n => { n = String(n || '').replace(/\s/g, ''); return n.length === 3 ? n.split('').join(' ') : n; };
+const pctTxt = r => { const p = Math.round(r * 10000) / 100; return (Number.isInteger(p) ? p.toFixed(1) : String(p)) + '%'; };
+const dateKo = (d, sp) => d ? (sp ? `${d.slice(0, 4)} 년 ${d.slice(5, 7)} 월 ${d.slice(8, 10)} 일` : `${d.slice(0, 4)}년 ${d.slice(5, 7)}월 ${d.slice(8, 10)}일`) : '';
+let CLAIM = null; // 지금 만들고 있는 청구서 { c, bi }
+function claimCalc(f) { // 창의 값 → 계산
+  const amts = String(f.claims).split('+').map(num).filter(x => x > 0), claim = amts.reduce((a, x) => a + x, 0);
+  const fee = Math.floor(claim * f.rate), day = 80000 * (f.days || 0), sub = fee + day, vat = f.vatOn ? Math.floor(sub * 0.1) : 0, total = sub + vat;
+  return { amts, claim, fee, day, sub, vat, total, bill: Math.floor(total / 10000) * 10000 };
+}
+function openClaimDoc(c, bi) {
+  const b = c.billings[bi]; CLAIM = { c, bi, wordsEdited: false, billEdited: false };
+  const f = { vatOn: (b.vat || 0) > 0, name: c.clientName || '', rrn: rrn7(c.clientRrn), addr: c.clientAddr || c.address || '', phone: c.clientPhone || '', acc: c.accidentDate || '',
+    place: (c.address || '') + (c.clientName ? `[계약자 : ${c.clientName}]` : ''), kind: (c.type || '화재').replace(/\s+대물$/, ''), claims: b.claim ? won(b.claim) : '', rate: b.rate || c.contract.rate || 0, days: 0, date: todayStr() };
+  const x = claimCalc(f);
+  const d = $('#dlg2');
+  d.innerHTML = `<div class="dlg-h"><h3>📝 손해사정보수청구서 · ${esc(c.name)} · 청구 ${bi + 1}</h3><button class="btn sm" data-ca="close" aria-label="닫기">✕</button></div>
+  <div class="dlg-b" id="claimForm">
+    <fieldset><legend>양식</legend><div style="display:flex;gap:22px;flex-wrap:wrap;padding:4px 2px"><label style="display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer"><input type="radio" name="cvat" value="1" ${f.vatOn ? 'checked' : ''}> 부가세 포함</label><label style="display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer"><input type="radio" name="cvat" value="0" ${f.vatOn ? '' : 'checked'}> 부가세 미포함 (VAT별도)</label></div></fieldset>
+    <fieldset><legend>피청구인(위임자) <span class="muted" style="font-weight:400;font-size:12.5px">입력하면 사건에 저장되어 다음부터 자동으로 채워집니다</span></legend><div class="fg">
+      <label>성명<input data-cf="name" value="${esc(f.name)}"></label>
+      <label>주민번호 앞 7자리<input data-cf="rrn" value="${esc(f.rrn)}" placeholder="예: 600820-1"><span class="hint">청구서에는 뒤 6자리가 ******로 나옵니다</span></label>
+      <label>전화<input data-cf="phone" value="${esc(f.phone)}"></label>
+      <label class="w4">주소<input data-cf="addr" value="${esc(f.addr)}"></label>
+    </div></fieldset>
+    <fieldset><legend>사고</legend><div class="fg">
+      <label>사고일<input type="date" data-cf="acc" value="${f.acc}"></label>
+      <label>사고 종류<input data-cf="kind" value="${esc(f.kind)}"><span class="hint">「○○사고」로 들어갑니다</span></label>
+      <label class="w4">사고 장소 (청구서 문장에 그대로)<input data-cf="place" value="${esc(f.place)}"></label>
+    </div></fieldset>
+    <fieldset><legend>보수 산출</legend><div class="fg">
+      <label class="w2">지급보험금<input data-cf="claims" value="${esc(f.claims)}" placeholder="여러 개면 + 로 (예: 84,934,797 + 23,635,779)"></label>
+      <label>요율 (%)<input data-cf="rate" value="${+(f.rate * 100).toFixed(3)}"></label>
+      <label>일비 일수<input data-cf="days" value="0"><span class="hint">1일 80,000원</span></label>
+      <div class="fl w4" id="claimCalc"></div>
+      <label>청구금액<input data-cf="bill" class="num" value="${won(x.bill)}"><span class="hint">합계에서 만원 미만 버림 · 직접 고칠 수 있음</span></label>
+      <label class="w2">청구금액 (한글)<input data-cf="words" value="${wonWords(x.bill)}"></label>
+      <label>청구일<input type="date" data-cf="date" value="${f.date}"></label>
+    </div></fieldset>
+  </div>
+  <div class="dlg-f"><span class="muted" style="font-size:12.5px">한글 파일(.hwpx)을 저장할 곳을 고르면 바로 만들어집니다</span><span class="sp"></span><button class="btn" data-ca="close" type="button">취소</button><button class="btn pri" data-ca="make" type="button">한글 파일 만들기</button></div>`;
+  claimRefresh();
+  if (!d.open) d.showModal();
+}
+function claimRead() {
+  const g = k => $(`#claimForm [data-cf="${k}"]`)?.value ?? '';
+  return { vatOn: $('#claimForm input[name=cvat]:checked')?.value === '1', name: g('name').trim(), rrn: rrn7(g('rrn')), addr: g('addr').trim(), phone: g('phone').trim(), acc: g('acc'), kind: g('kind').trim(), place: g('place').trim(),
+    claims: g('claims'), rate: num(g('rate')) / 100, days: num(g('days')), bill: num(g('bill')), words: g('words').trim(), date: g('date') };
+}
+function claimRefresh() { // 계산 표 다시 그리기 (청구금액·한글은 직접 고치지 않았으면 따라 바뀜)
+  const f = claimRead(), x = claimCalc(f);
+  if (!CLAIM.billEdited) { $('#claimForm [data-cf=bill]').value = won(x.bill); f.bill = x.bill; }
+  if (!CLAIM.wordsEdited) $('#claimForm [data-cf=words]').value = wonWords(f.bill);
+  const row = (a, b, c) => `<tr><td>${a}</td><td>${b}</td><td class="r"><b>${c}</b></td></tr>`;
+  $('#claimCalc').innerHTML = `<table class="t" style="max-width:620px"><tbody>
+    ${row('1) 보수', `${x.amts.length > 1 ? '(' + x.amts.map(a => '₩' + won(a)).join(' + ') + ')' : '₩' + won(x.claim)} × ${pctTxt(f.rate)}`, '₩' + won(x.fee))}
+    ${row('2) 일비', `₩80,000 × ${f.days || 0}일`, '₩' + won(x.day))}
+    ${row('3) 소계', '1)+2)', '₩' + won(x.sub))}
+    ${row('4) 부가가치세', f.vatOn ? `₩${won(x.sub)} × 10%` : '미포함', '₩' + won(x.vat))}
+    ${row('5) 합계', '3)+4)', '₩' + won(x.total))}</tbody></table>`;
+}
+async function claimMake() {
+  const f = claimRead(), x = claimCalc(f), { c, bi } = CLAIM;
+  if (!x.claim) { alert('지급보험금을 입력하세요'); return; }
+  if (!f.name) { alert('피청구인 성명을 입력하세요'); return; }
+  const fname = `${(f.date || todayStr()).replace(/-/g, '')}_${c.name}_보수청구서(부가세 ${f.vatOn ? '포함' : '미포함'}).hwpx`.replace(/[\\/:*?"<>|]/g, '_');
+  let handle = null;
+  if (window.showSaveFilePicker) { // 버튼을 누른 직후에 저장 위치부터 고름 (엣지 규칙)
+    try { handle = await showSaveFilePicker({ suggestedName: fname, types: [{ description: '한글 문서', accept: { 'application/haansofthwpx': ['.hwpx'] } }] }); }
+    catch (e) { if (e.name === 'AbortError') return; handle = null; }
+  }
+  const W = s => '\\' + won(s), xe = s => String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const v = { NAME: f.vatOn ? spaced(f.name) : f.name, NAMESP: spaced(f.name), RRN: f.rrn ? f.rrn + '******' : '', ADDR: f.addr, PHONE: f.phone,
+    ACCDATE: dateKo(f.acc, !f.vatOn), PLACE: f.place, KIND: f.kind,
+    CLAIMEXPR: `${x.amts.length > 1 ? '(' + x.amts.map(W).join(' + ') + ')' : W(x.claim)} * ${pctTxt(f.rate)}`, FEE: W(x.fee),
+    DAYEXPR: `\\80,000 * ${f.days || 0}일`, DAYAMT: W(x.day), SUB: W(x.sub), VATEXPR: `${W(x.sub)} * 10%`, VAT: W(x.vat), TOTAL: W(x.total),
+    WORDS: f.words, BILL: won(f.bill), BILLDATE: dateKo(f.date, true) };
+  v.PRVTEXT = `손해사정보수청구서 ${v.NAME} ${v.WORDS} (${v.BILL})`;
+  const fill = t => t.replace(/\{\{(\w+)\}\}/g, (m, k) => xe(v[k]));
+  const dec = new TextDecoder(), enc = new TextEncoder();
+  const entries = (f.vatOn ? CLAIM_TPL.inc : CLAIM_TPL.exc).map(([name, id]) => {
+    let data = b64bytes(CLAIM_TPL.blobs[id]);
+    if (name === 'Contents/section0.xml' || name === 'Preview/PrvText.txt') data = enc.encode(fill(dec.decode(data)));
+    return { name, data, store: name === 'mimetype' || name.startsWith('BinData/') };
+  });
+  const blob = await makeZip(entries);
+  if (handle) { const w = await handle.createWritable(); await w.write(blob); await w.close(); }
+  else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+  // 위임인 정보는 사건에 저장 (다음부터 자동으로 채움)
+  const keep = o => { o.clientName = f.name; o.clientRrn = f.rrn; o.clientAddr = f.addr; if (f.phone) o.clientPhone = f.phone; };
+  keep(c); const sc = S.cases.find(y => y.id === c.id); if (sc) { keep(sc); save(true); }
+  $('#dlg2').close(); CLAIM = null; if (EDIT && EDIT.id === c.id) drawKeep();
+  toast(`보수청구서를 만들었습니다 · ${handle ? handle.name : fname}`);
+}
+$('#dlg2').addEventListener('input', e => {
+  if (!CLAIM) return; const k = e.target.dataset.cf;
+  if (k === 'bill') { CLAIM.billEdited = true; const el = e.target, pos = el.value.length - el.selectionStart; el.value = el.value.trim() === '' ? '' : won(num(el.value)); const p = Math.max(0, el.value.length - pos); el.setSelectionRange(p, p); }
+  if (k === 'words') CLAIM.wordsEdited = true;
+  if (['claims', 'rate', 'days', 'bill'].includes(k) || e.target.name === 'cvat') claimRefresh();
+});
+$('#dlg2').addEventListener('change', e => { if (CLAIM && e.target.name === 'cvat') { CLAIM.billEdited = false; CLAIM.wordsEdited = false; claimRefresh(); } });
+$('#dlg2').addEventListener('click', e => {
+  const t = e.target.closest('[data-ca]'); if (!t || !CLAIM) return;
+  if (t.dataset.ca === 'close') { $('#dlg2').close(); CLAIM = null; }
+  if (t.dataset.ca === 'make') claimMake().catch(err => alert('만들지 못했습니다: ' + err.message));
+});
+$('#dlg2').addEventListener('cancel', () => { CLAIM = null; });
+
 /* ---------- case dialog ---------- */
 let EDIT = null;
 function openCase(id) {
@@ -1621,6 +1762,9 @@ function drawCase() {
       <label>위탁업체<input data-f="agency" list="dl-agency" value="${esc(c.agency || '')}"></label>
       <label>담당자<input data-f="staff" value="${esc(c.staff || '')}" placeholder="이름·직책·연락처"></label>
       <label>계약자 연락처<input data-f="clientPhone" value="${esc(c.clientPhone)}"></label>
+      <label>위임인 성명<input data-f="clientName" value="${esc(c.clientName || '')}"></label>
+      <label>주민번호 앞 7자리<input data-f="clientRrn" value="${esc(c.clientRrn || '')}" placeholder="예: 600820-1"></label>
+      <label class="w2">위임인 주소<input data-f="clientAddr" value="${esc(c.clientAddr || '')}" placeholder="비우면 사고 장소 주소를 씀"></label>
       <label class="w2">사고 장소 / 주소<input data-f="address" value="${esc(c.address)}"></label>
       <label>순번(엑셀)<input data-f="no" value="${esc(c.no)}"></label>
     </div></fieldset>
@@ -1649,7 +1793,7 @@ function drawCase() {
       <label class="w4">사건 메모<textarea data-f="memo" rows="2">${esc(c.memo)}</textarea></label>
     </div></fieldset>
     <fieldset><legend>청구 · 입금 <span class="muted" style="font-weight:400;font-size:12.5px">수수료 ${n(s.fee)} · 청구액 ${n(s.total)} · 미입금 ${n(s.unpaidTotal)} · 순이익 ${n(s.net)}</span><span style="flex:1"></span><button class="btn sm" data-act="addbill" type="button">+ 분할 청구 추가</button></legend>
-    ${c.billings.map((b, i) => `<div class="bill" data-bi="${i}"><div class="bill-h">청구 ${i + 1} ${feeKind(b)} ${b.paidDate ? '<span class="badge good">✓ 입금 ' + fmtDate(b.paidDate) + '</span>' : ''}<label class="chk" style="font-weight:400;margin-left:6px"><input type="checkbox" data-b="confirmed" ${isConfirmed(b) ? 'checked' : ''}> 확정 수수료</label><span class="sp"></span><button class="btn sm" data-act="calc" type="button" title="보험금 × 요율 × 지분, 부가세 10%">수수료 자동계산</button>${c.billings.length > 1 ? `<button class="btn sm dan" data-delbill="${i}" type="button">삭제</button>` : ''}</div>
+    ${c.billings.map((b, i) => `<div class="bill" data-bi="${i}"><div class="bill-h">청구 ${i + 1} ${feeKind(b)} ${b.paidDate ? '<span class="badge good">✓ 입금 ' + fmtDate(b.paidDate) + '</span>' : ''}<label class="chk" style="font-weight:400;margin-left:6px"><input type="checkbox" data-b="confirmed" ${isConfirmed(b) ? 'checked' : ''}> 확정 수수료</label><span class="sp"></span>${!WEB && CLAIM_TPL ? `<button class="btn sm" data-act="claimDoc" data-bi="${i}" type="button" title="이 청구의 지급보험금·요율로 손해사정보수청구서(한글) 만들기">📝 보수청구서</button>` : ''}<button class="btn sm" data-act="calc" type="button" title="보험금 × 요율 × 지분, 부가세 10%">수수료 자동계산</button>${c.billings.length > 1 ? `<button class="btn sm dan" data-delbill="${i}" type="button">삭제</button>` : ''}</div>
       <div class="fg">
         <label>지급보험금<input class="num" data-b="claim" value="${n(b.claim)}"></label>
         <label>요율 (%)<input class="num" data-b="rate" data-pct value="${+(b.rate * 100).toFixed(3)}"></label>
@@ -1671,6 +1815,7 @@ function drawCase() {
 function readForm() {
   const c = EDIT, f = $('#cform'); if (!f) return;
   f.querySelectorAll('[data-f]').forEach(el => c[el.dataset.f] = el.value.trim ? el.value.trim() : el.value);
+  if (c.clientRrn) c.clientRrn = rrn7(c.clientRrn); // 주민번호는 앞 7자리만
   f.querySelectorAll('.todo-row').forEach(el => { const t = c.todos[+el.dataset.ti]; if (t) { t.text = el.querySelector('[data-tf=text]').value.trim(); t.start = el.querySelector('[data-tf=start]').value; t.due = el.querySelector('[data-tf=due]').value; } });
   f.querySelectorAll('[data-c]').forEach(el => { const k = el.dataset.c; c.contract[k] = el.hasAttribute('data-pct') ? num(el.value) / 100 : el.value; });
   f.querySelectorAll('.bill').forEach(el => { const b = c.billings[+el.dataset.bi]; el.querySelectorAll('[data-b]').forEach(i => { const k = i.dataset.b; b[k] = k === 'confirmed' ? i.checked : ['billDate', 'paidDate', 'memo'].includes(k) ? i.value : i.hasAttribute('data-pct') ? num(i.value) / 100 : num(i.value); }); });
@@ -1725,6 +1870,7 @@ $('#dlg').addEventListener('click', e => {
   if (act === 'delTodo') { const x = EDIT.todos[+t.dataset.ti]; if (x && (x.text || x.due || x.start) && !confirm(`“${x.text || '(내용 없음)'}” 할 일을 지울까요?\n진행일지에는 남기지 않습니다.`)) return; EDIT.todos.splice(+t.dataset.ti, 1); drawKeep(); return; }
   if (act === 'addlog') { const tx = $('#logText').value.trim(); if (!tx) return; EDIT.logs.unshift({ date: $('#logDate').value || todayStr(), text: tx }); EDIT.logs.sort((a, b) => a.date < b.date ? 1 : -1); drawKeep(); $('#logText').focus(); return; }
   if (t.dataset.dellog != null) { EDIT.logs.splice(+t.dataset.dellog, 1); drawKeep(); return; }
+  if (act === 'claimDoc') { openClaimDoc(EDIT, +t.dataset.bi); return; }
   if (act === 'addbill') { EDIT.billings.push(blankBilling(EDIT.contract.rate, EDIT.contract.share)); drawKeep(); return; }
   if (t.dataset.delbill != null) { if (confirm('이 청구 내역을 삭제할까요?')) { EDIT.billings.splice(+t.dataset.delbill, 1); drawKeep(); } return; }
   if (act === 'calc') { const b = EDIT.billings[+t.closest('.bill').dataset.bi]; b.fee = Math.round(b.claim * b.rate * b.share); b.vat = Math.round(b.fee * 0.1); drawKeep(); return; }
