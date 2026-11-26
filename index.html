@@ -1621,6 +1621,12 @@ const spaced = n => { n = String(n || '').replace(/\s/g, ''); return n.length ==
 const pctTxt = r => { const p = Math.round(r * 10000) / 100; return (Number.isInteger(p) ? p.toFixed(1) : String(p)) + '%'; };
 const dateKo = (d, sp) => d ? (sp ? `${d.slice(0, 4)} 년 ${d.slice(5, 7)} 월 ${d.slice(8, 10)} 일` : `${d.slice(0, 4)}년 ${d.slice(5, 7)}월 ${d.slice(8, 10)}일`) : '';
 let CLAIM = null; // 지금 만들고 있는 청구서 { c, bi }
+let CLAIM_WEB = null; // 인터넷 버전: OneDrive 「번영손해사정/양식/보수청구서_양식.json」에서 읽은 양식 (2026-11-26)
+async function claimTpl() {
+  if (CLAIM_TPL) return CLAIM_TPL;
+  if (!CLAIM_WEB) { const f = await graphFile([MS.folder, '양식', '보수청구서_양식.json']).getFile(); CLAIM_WEB = JSON.parse(await f.text()); }
+  return CLAIM_WEB;
+}
 function claimCalc(f) { // 창의 값 → 계산
   const amts = String(f.claims).split('+').map(num).filter(x => x > 0), claim = amts.reduce((a, x) => a + x, 0);
   const fee = Math.floor(claim * f.rate), day = 80000 * (f.days || 0), sub = fee + day, vat = f.vatOn ? Math.floor(sub * 0.1) : 0, total = sub + vat;
@@ -1696,8 +1702,9 @@ async function claimMake() {
   v.PRVTEXT = `손해사정보수청구서 ${v.NAME} ${v.WORDS} (${v.BILL})`;
   const fill = t => t.replace(/\{\{(\w+)\}\}/g, (m, k) => xe(v[k]));
   const dec = new TextDecoder(), enc = new TextEncoder();
-  const entries = (f.vatOn ? CLAIM_TPL.inc : CLAIM_TPL.exc).map(([name, id]) => {
-    let data = b64bytes(CLAIM_TPL.blobs[id]);
+  const TPL = await claimTpl();
+  const entries = (f.vatOn ? TPL.inc : TPL.exc).map(([name, id]) => {
+    let data = b64bytes(TPL.blobs[id]);
     if (name === 'Contents/section0.xml' || name === 'Preview/PrvText.txt') data = enc.encode(fill(dec.decode(data)));
     return { name, data, store: name === 'mimetype' || name.startsWith('BinData/') };
   });
@@ -1794,7 +1801,7 @@ function drawCase() {
       <label class="w4">사건 메모<textarea data-f="memo" rows="2">${esc(c.memo)}</textarea></label>
     </div></fieldset>
     <fieldset><legend>청구 · 입금 <span class="muted" style="font-weight:400;font-size:12.5px">수수료 ${n(s.fee)} · 청구액 ${n(s.total)} · 미입금 ${n(s.unpaidTotal)} · 순이익 ${n(s.net)}</span><span style="flex:1"></span><button class="btn sm" data-act="addbill" type="button">+ 분할 청구 추가</button></legend>
-    ${c.billings.map((b, i) => `<div class="bill" data-bi="${i}"><div class="bill-h">청구 ${i + 1} ${feeKind(b)} ${b.paidDate ? '<span class="badge good">✓ 입금 ' + fmtDate(b.paidDate) + '</span>' : ''}<label class="chk" style="font-weight:400;margin-left:6px"><input type="checkbox" data-b="confirmed" ${isConfirmed(b) ? 'checked' : ''}> 확정 수수료</label><span class="sp"></span>${!WEB && CLAIM_TPL ? `<button class="btn sm" data-act="claimDoc" data-bi="${i}" type="button" title="이 청구의 지급보험금·요율로 손해사정보수청구서(한글) 만들기">📝 보수청구서</button>` : ''}<button class="btn sm" data-act="calc" type="button" title="보험금 × 요율 × 지분, 부가세 10%">수수료 자동계산</button>${c.billings.length > 1 ? `<button class="btn sm dan" data-delbill="${i}" type="button">삭제</button>` : ''}</div>
+    ${c.billings.map((b, i) => `<div class="bill" data-bi="${i}"><div class="bill-h">청구 ${i + 1} ${feeKind(b)} ${b.paidDate ? '<span class="badge good">✓ 입금 ' + fmtDate(b.paidDate) + '</span>' : ''}<label class="chk" style="font-weight:400;margin-left:6px"><input type="checkbox" data-b="confirmed" ${isConfirmed(b) ? 'checked' : ''}> 확정 수수료</label><span class="sp"></span>${CLAIM_TPL || WEB ? `<button class="btn sm" data-act="claimDoc" data-bi="${i}" type="button" title="이 청구의 지급보험금·요율로 손해사정보수청구서(한글) 만들기">📝 보수청구서</button>` : ''}<button class="btn sm" data-act="calc" type="button" title="보험금 × 요율 × 지분, 부가세 10%">수수료 자동계산</button>${c.billings.length > 1 ? `<button class="btn sm dan" data-delbill="${i}" type="button">삭제</button>` : ''}</div>
       <div class="fg">
         <label>지급보험금<input class="num" data-b="claim" value="${n(b.claim)}"></label>
         <label>요율 (%)<input class="num" data-b="rate" data-pct value="${+(b.rate * 100).toFixed(3)}"></label>
